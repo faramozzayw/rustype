@@ -57,5 +57,57 @@ describe("Option", () => {
 		});
 	});
 
-	it("unwrapOrElse on `Some`", () => {});
+	it("unwrapOrElse on `Some`", () => {
+		const some = Some("SOME");
+
+		expect(some.unwrapOrElse(() => "NONE")).toEqual("SOME");
+	});
+
+	it("unwrapOrElse on `None`", () => {
+		const none = None();
+
+		expect(none.unwrapOrElse(() => "NONE")).toEqual("NONE");
+	});
+
+	it("`map` on `Some`", () => {
+		const some = Some({ isSome: true });
+
+		const mappedSome = some.map((item) => ({
+			data: !item.isSome,
+		}));
+
+		expect(mappedSome.unwrap()).toEqual({
+			data: false,
+		});
+	});
+
+	it("`mapOr` on `Some` and None", () => {
+		const defaultStatus: number = 500;
+
+		const some = Some({ status: 200 });
+		const mappedSome = some.mapOr(defaultStatus, (data) => data.status);
+		expect(mappedSome).toEqual(200);
+
+		const none = None();
+		const mappedNone = none.mapOr(defaultStatus, (data) => data.status);
+		expect(mappedNone).toEqual(500);
+	});
+
+	it("`mapOrElse` on `Some` and None", () => {
+		const defaultStatus: number = 500;
+
+		const some = Some({ status: 200 });
+		const mappedSome = some.mapOrElse(
+			() => defaultStatus,
+			(data) => data.status,
+		);
+		expect(mappedSome).toEqual(200);
+
+		const none = None();
+		const mappedNone = none.mapOrElse(
+			() => defaultStatus,
+			(data) => data.status,
+		);
+		expect(mappedNone).toEqual(500);
+	});
 });
