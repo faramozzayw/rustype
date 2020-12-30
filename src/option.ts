@@ -1,3 +1,5 @@
+import clone from "clone-deep";
+
 import { OptionType } from "./types";
 import { Some, None } from "./optionValue";
 
@@ -6,6 +8,10 @@ export class Option<T> {
 
 	constructor(data: OptionType<T>) {
 		this.data = data;
+	}
+
+	private clone() {
+		return clone(this.data);
 	}
 
 	/** Returns `true` if the option is a `Some` value. */
@@ -19,11 +25,26 @@ export class Option<T> {
 	}
 
 	/**
+	 * Returns the contained Some value, consuming the self value.
+	 *
+	 * ### Throw an error
+	 *
+	 * Panics if the value is a `None` with a custom panic message provided by msg. [`Error`]
+	 */
+	public expect(msg: string): T | never {
+		if (this.isNone()) {
+			throw new Error(msg);
+		}
+
+		return this.clone();
+	}
+
+	/**
 	 * Returns the contained `Some` value, consuming the self value.
 	 *
 	 * ### Throw an error
 	 *
-	 * Throw an error (`TypeError`) if the self value equals `None`.
+	 * Throw an error if the self value equals `None`. [`TypeError`]
 	 */
 	public unwrap(): T | never {
 		if (this.isNone()) {
@@ -84,7 +105,7 @@ export class Option<T> {
 	public map<U, F extends (data: T) => U>(fn: F): Option<U> {
 		if (this.isNone()) return None();
 
-		return Some(fn({ ...this.data }));
+		return Some(fn(this.clone()));
 	}
 
 	/**
@@ -102,7 +123,7 @@ export class Option<T> {
 	public mapOr<U, F extends (data: T) => U>(defaultVal: U, fn: F): U {
 		if (this.isNone()) return defaultVal;
 
-		return fn({ ...this.data });
+		return fn(this.clone());
 	}
 
 	/** Applies a function to the contained value (if any), or computes a default (if not). */
@@ -112,6 +133,46 @@ export class Option<T> {
 	): U {
 		if (this.isNone()) return defaultFn();
 
-		return fn({ ...this.data });
+		return fn(this.clone());
+	}
+
+	/**
+	 * Returns None if the option is `None`, otherwise calls f with the wrapped value and returns the result.
+	 *
+	 * Some languages call this operation **flatmap**.
+	 */
+	public andThen<U extends T, F extends (data: T) => Option<U>>(
+		fn: F,
+	): Option<U> {
+		if (this.isNone()) return None();
+
+		return fn(this.clone());
+	}
+
+	/**>
+	 * Returns `None` if the option is `None`, otherwise calls `predicate` with the wrapped value and returns:
+	 * - [`Some(t)`] if `predicate` returns `true` (where `t` is the wrapped value), and
+	 * - `None` if `predicate` returns `false`.
+	 */
+	public filter<P extends (data: T) => boolean>(predicate: P): Option<T> {
+		if (this.isNone()) return None();
+
+		const clone = this.clone();
+		if (predicate(clone)) {
+			return Some(clone);
+		}
+
+		return None();
+	}
+
+	/**
+	 * Replaces the actual value in the option by the value given in parameter,
+	 * returning the old value if present, leaving a `Some` in its place without
+	 * deinitializing either one.
+	 */
+	public replace(value: T): Option<T> {
+		const old = this.clone();
+		this.data = value;
+		return Some(old);
 	}
 }

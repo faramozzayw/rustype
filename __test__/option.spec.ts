@@ -17,6 +17,14 @@ describe("Option", () => {
 		expect(none.isNone()).toBeTruthy();
 	});
 
+	it("expect", () => {
+		const none = None();
+		expect(() => none.expect("some")).toThrowError(new Error("some"));
+
+		const some = Some(5);
+		expect(some.expect("some")).toEqual(5);
+	});
+
 	it("unwrap on `Some`", () => {
 		const [some1, some2, some3] = [
 			Some(5),
@@ -109,5 +117,41 @@ describe("Option", () => {
 			(data) => data.status,
 		);
 		expect(mappedNone).toEqual(500);
+	});
+
+	it("andThen", () => {
+		const some = Some(25);
+		const sq = (x: number) => Some(x * x);
+
+		// 25 * 25 => 625 + 5 => 630
+		const result = some.andThen(sq).andThen((x) => Some(x + 5));
+		expect(result.unwrap()).toEqual(630);
+	});
+
+	it("`filter`", () => {
+		const some = Some({ status: 200 });
+
+		const result = some
+			.filter((item) => item.status === 200)
+			.map((_) => "Ok")
+			.unwrapOr("Error");
+
+		expect(result).toEqual("Ok");
+
+		const someNumber = Some(200);
+		expect(someNumber.filter((item) => item === 200).unwrapOr(500)).toEqual(
+			200,
+		);
+	});
+
+	it("replace", () => {
+		const some = Some(50);
+
+		expect(some.unwrap()).toEqual(50);
+
+		const oldSome = some.replace(250);
+
+		expect(oldSome.unwrap()).toEqual(50);
+		expect(some.unwrap()).toEqual(250);
 	});
 });
