@@ -154,4 +154,24 @@ describe("Option", () => {
 		expect(oldSome.unwrap()).toEqual(50);
 		expect(some.unwrap()).toEqual(250);
 	});
+
+	it("zip", () => {
+		const x = Some(1);
+		const y = Some("hi");
+		const z = None();
+
+		expect(x.zip(y)).toEqual(Some([1, "hi"]));
+		expect(x.zip(z)).toEqual(None());
+	});
+
+	it("flatten", () => {
+		expect(Some(Some(Some(50))).flatten()).toEqual(Some(Some(50)));
+		expect(Some(Some(50)).flatten()).toEqual(Some(50));
+
+		expect(Some(50).flatten()).toEqual(Some(50));
+		expect(Some(50).flatten().unwrap()).toEqual(50);
+
+		expect(Some(None()).flatten()).toEqual(None());
+		expect(None().flatten()).toEqual(None());
+	});
 });

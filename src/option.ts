@@ -2,6 +2,7 @@ import clone from "clone-deep";
 
 import { OptionType } from "./types";
 import { Some, None } from "./optionValue";
+import { identity } from "./convert";
 
 export class Option<T> {
 	private data: OptionType<T>;
@@ -169,10 +170,74 @@ export class Option<T> {
 	 * Replaces the actual value in the option by the value given in parameter,
 	 * returning the old value if present, leaving a `Some` in its place without
 	 * deinitializing either one.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const some = Some(50);
+	 * expect(some.unwrap()).toEqual(50);
+	 *
+	 * const oldSome = some.replace(250);
+	 * expect(oldSome.unwrap()).toEqual(50);
+	 * expect(some.unwrap()).toEqual(250);
+	 * ```
 	 */
 	public replace(value: T): Option<T> {
 		const old = this.clone();
 		this.data = value;
 		return Some(old);
+	}
+
+	/**
+	 *  Zips `self` with another `Option`.
+	 *
+	 * If `self` is `Some(s)` and other is `Some(o)`, this method returns `Some((s, o))`.
+	 * Otherwise, `None` is returned.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const x = Some(1);
+	 * const y = Some("hi");
+	 * const z = None();
+	 *
+	 * expect(x.zip(y)).toEqual(Some([1, "hi"]));
+	 * expect(x.zip(z)).toEqual(None());
+	 * ```
+	 */
+	public zip<U>(other: Option<U>): Option<[T, U]> {
+		if (this.isNone() || other.isNone()) return None();
+
+		return Some([this.unwrap(), other.unwrap()]);
+	}
+
+	/**
+	 * Converts from Option<Option<T>> to Option<T>
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(Some(Some(Some(50))).flatten()).toEqual(Some(Some(50)));
+	 * expect(Some(Some(50)).flatten()).toEqual(Some(50));
+	 *
+	 * expect(Some(50).flatten()).toEqual(Some(50));
+	 * expect(Some(50).flatten().unwrap()).toEqual(50);
+	 *
+	 * expect(Some(None()).flatten()).toEqual(None());
+	 * expect(None().flatten()).toEqual(None());
+	 * ```
+	 */
+	public flatten(): Option<T> {
+		if (this.isNone()) return None();
+
+		if (this.data instanceof Option) {
+			return this.data;
+		}
+
+		return Some(this.data);
+	}
+
+	/** Returns `None` if the option is `None`, otherwise returns `optb`. */
+	private and<U>(optb: Option<U>): Option<U> {
+		if (this.isNone()) return None();
+
+		return optb;
 	}
 }
