@@ -304,6 +304,62 @@ export class Result<T, E> {
 
 		return fn(this.cloneOk());
 	}
+
+	/**
+	 * Transposes a Result of an Option into an Option of a Result.
+	 *
+	 * `Ok(None)` will be mapped to None. `Ok(Some(_))` and `Err(_)` will be mapped to `Some(Ok(_))` and `Some(Err(_))`.
+	 *
+	 * ### Panics
+	 * Panics if the value is an `Ok` where self is not an `Option`, with a panic message provided by the `Ok`'s value.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const x: Result<Option<number>, string> = new Ok(Some(5));
+	 * const y: Option<Result<number, string>> = Some(new Ok(5));
+	 *
+	 * expect(x.transpose()).toEqual(y);
+	 * ```
+	 */
+	public transpose(): Option<Result<T, E>> {
+		if (this.isErr()) return Some(new Err(this.cloneErr()));
+
+		if (this.data instanceof Option) {
+			if (this.data.isSome()) {
+				const innerValue = this.data.unwrap();
+				return Some(new Ok(innerValue));
+			}
+
+			return None();
+		} else {
+			this.unwrapFailed(
+				"called `Result::transpose()` on an `Ok` value where `self` is not an `Option`",
+				this.data,
+			);
+		}
+	}
+
+	/**
+	 * Converts from `Result<Result<T, E>, E>` to `Result<T, E>`
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(new Ok(new Ok(50)).flatten()).toEqual(new Ok(50));
+	 * expect(new Ok(50).flatten().unwrap()).toEqual(50);
+	 *
+	 * expect(new Ok(new Err("Error")).flatten()).toEqual(new Err("Error"));
+	 * expect(new Err("Error").flatten()).toEqual(new Err("Error"));
+	 * ```
+	 */
+	public flatten(): Result<T, E> {
+		if (this.isErr()) return new Err(this.cloneErr());
+
+		if (this.data instanceof Result) {
+			return this.data;
+		}
+
+		return new Ok(this.cloneOk());
+	}
 }
 
 export class Err<E> extends Result<any, E> {

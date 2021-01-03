@@ -1,4 +1,4 @@
-import { None, Some } from "./../src";
+import { None, Some, Option, Ok, Err, Result } from "./../src";
 
 describe("Option", () => {
 	it("is_some", () => {
@@ -162,6 +162,13 @@ describe("Option", () => {
 
 		expect(x.zip(y)).toEqual(Some([1, "hi"]));
 		expect(x.zip(z)).toEqual(None());
+	});
+
+	it("transpose", () => {
+		const x: Result<Option<number>, string> = new Ok(Some(5));
+		const y: Option<Result<number, string>> = Some(new Ok(5));
+
+		expect(x).toEqual(y.transpose());
 	});
 
 	it("flatten", () => {

@@ -1,4 +1,4 @@
-import { Err, None, Ok, Result, Some } from "./../src";
+import { Err, Ok, Result, Some, None, Option } from "./../src";
 
 describe("Result", () => {
 	it("isOk", () => {
@@ -144,5 +144,20 @@ describe("Result", () => {
 		// 25 * 25 => 625 + 5 => 630
 		const result = ok.andThen(sq).andThen((x) => new Ok(x + 5));
 		expect(result.unwrap()).toEqual(630);
+	});
+
+	it("transpose", () => {
+		const x: Result<Option<number>, string> = new Ok(Some(5));
+		const y: Option<Result<number, string>> = Some(new Ok(5));
+
+		expect(x.transpose()).toEqual(y);
+	});
+
+	it("flatten", () => {
+		expect(new Ok(new Ok(50)).flatten()).toEqual(new Ok(50));
+		expect(new Ok(50).flatten().unwrap()).toEqual(50);
+
+		expect(new Ok(new Err("Error")).flatten()).toEqual(new Err("Error"));
+		expect(new Err("Error").flatten()).toEqual(new Err("Error"));
 	});
 });

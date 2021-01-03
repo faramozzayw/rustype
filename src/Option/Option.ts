@@ -2,7 +2,9 @@ import clone from "clone-deep";
 
 import { OptionType } from "../types";
 import { Some, None } from "./values";
-import { identity } from "../convert";
+
+import { Ok, Err, Result } from "../Result";
+import { Options } from "prettier";
 
 export class Option<T> {
 	private data: OptionType<T>;
@@ -13,6 +15,10 @@ export class Option<T> {
 
 	private clone() {
 		return clone(this.data);
+	}
+
+	private unwrapFailed(msg: string, error: T): never {
+		throw new Error(`${msg}: ${JSON.stringify(error)}`);
 	}
 
 	/** Returns `true` if the option is a `Some` value. */
@@ -207,6 +213,41 @@ export class Option<T> {
 		if (this.isNone() || other.isNone()) return None();
 
 		return Some([this.unwrap(), other.unwrap()]);
+	}
+
+	/**
+	 * Transposes an `Option` of a `Result` into a `Result` of an `Option`.
+	 *
+	 * `None` will be mapped to `Ok(None)`. `Some(Ok(_))` and `Some(Err(_))` will be mapped to `Ok(Some(_))` and `Err(_)`.
+	 *
+	 * ### Panics
+	 * Panics if the value is an `Some` where self is not an `Result`, with a panic message provided by the `Some`'s value.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const x: Result<Option<number>, string> = new Ok(Some(5));
+	 * const y: Option<Result<number, string>> = Some(new Ok(5));
+	 *
+	 * expect(x).toEqual(y.transpose());
+	 * ```
+	 */
+	public transpose<E extends unknown>(): Result<Option<T>, E> {
+		if (this.isNone()) return new Ok(None());
+
+		if (this.data instanceof Result) {
+			if (this.data.isOk()) {
+				const innerValue = this.data.unwrap();
+				return new Ok(Some(innerValue));
+			}
+
+			const innerError = this.data.unwrap();
+			return new Err<E>(innerError);
+		} else {
+			this.unwrapFailed(
+				"called `Option::transpose()` on an `Some` value where `self` is not an `Result`",
+				this.data,
+			);
+		}
 	}
 
 	/**
