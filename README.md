@@ -48,13 +48,17 @@ import { Result, Err, Ok } from "@faramo.zayw/rustype";
 
 
 const safeAdd = (a: number, b: number): Result<number, string> => {
-	if(Number.isSafeInteger(a) || Number.isSafeInteger(b)) {
+	if(Number.isSafeInteger(a) && Number.isSafeInteger(b)) {
 		const sum = a + b;
 		return Number.isSafeInteger(sum) ? sum : Err("The sum result is not a safe integer.");
 	}
 	
 	return Err("Some of the arguments are not safe integers."); 
 }
+
+console.log(safeAdd(6, 7)); // Ok(13)
+console.log(safeAdd(Infinity, 7)); // Err("Some of the arguments are not safe integers.")
+console.log(safeAdd(Number.MAX_SAFE_INTEGER  - 1, 7)); // Err("The sum result is not a safe integer.");
 ```
 
 ### API Docs
