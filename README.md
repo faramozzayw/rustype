@@ -7,13 +7,13 @@ Type safe Option and Result from the Rust programming language.
 Using npm
 
 ```sh
-npm i @faramo.zayw/reabulma
+npm i @faramo.zayw/rustype
 ```
 
 Using yarn
 
 ```sh
-yarn add @faramo.zayw/reabulma
+yarn add @faramo.zayw/rustype
 ```
 
 ## Usage
