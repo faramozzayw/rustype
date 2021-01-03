@@ -29,7 +29,7 @@ interface User {
 
 const fetchUser = (userID: number): Option<User> => { ... };
 
-fetchUser(1297)
+const myUser = fetchUser(1297)
 	.map(({ firstName, lastName, ...props }) => ({
 		username: `@${firstName}_${lastName}`,
 		...props,
