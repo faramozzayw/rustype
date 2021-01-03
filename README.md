@@ -30,6 +30,7 @@ interface User {
 	age: number;
 }
 
+const defaultUser: User = { ... };
 const fetchUser = (userID: number): Option<User> => { ... };
 
 const myUser = fetchUser(1297)
@@ -39,6 +40,13 @@ const myUser = fetchUser(1297)
 	}))
 	.filter(({ age }) => age > 18)
 	.unwrapOr({ ...defaultUser });
+```
+
+### `Result<T, E>`
+```ts
+import { Result } from "@faramo.zayw/rustype";
+
+
 ```
 
 ### API Docs
