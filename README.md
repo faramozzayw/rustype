@@ -24,18 +24,18 @@ interface User {
 	lastName: string;
 	email?: string;
 	phone?: string;
-	age?: number;
+	age: number;
 }
-const fetchUser = (userID: number): User | null => {
-	return {} as User;
-};
 
-Some(fetchUser(124125412))
+const fetchUser = (userID: number): Option<User> => { ... };
+
+fetchUser(1297)
 	.map(({ firstName, lastName, ...props }) => ({
 		username: `@${firstName}_${lastName}`,
 		...props,
 	}))
 	.filter(({ age }) => age > 18)
+	.unwrapOr({ ...defaultUser });
 ```
 
 ### Alternatives?
