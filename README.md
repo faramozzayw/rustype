@@ -35,6 +35,7 @@ Some(fetchUser(124125412))
 		username: `@${firstName}_${lastName}`,
 		...props,
 	}))
+	.filter(({ age }) => age > 18)
 ```
 
 ### Alternatives?
