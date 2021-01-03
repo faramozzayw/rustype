@@ -44,9 +44,16 @@ const myUser = fetchUser(1297)
 
 ### `Result<T, E>`
 ```ts
-import { Result } from "@faramo.zayw/rustype";
+import { Result, Err, Ok } from "@faramo.zayw/rustype";
 
 
+const safeAdd = (a: number, b: number): Result<number, string> => {
+	if(Number.isSafeInteger(a) || Number.isSafeInteger(b)) {
+
+	}
+	
+	return Err("Some of args isn't safe integer"); 
+}
 ```
 
 ### API Docs
