@@ -1,4 +1,4 @@
-# rustype
+# Rustype 🦀
 
 Type safe Option and Result from the Rust programming language.
 
