@@ -17,7 +17,10 @@ yarn add @faramo.zayw/rustype
 ```
 
 ## Usage
+### `Option<T>`
 ```ts
+import { Option } from "@faramo.zayw/rustype";
+
 interface User {
 	id: number;
 	firstName: string;
@@ -37,6 +40,9 @@ const myUser = fetchUser(1297)
 	.filter(({ age }) => age > 18)
 	.unwrapOr({ ...defaultUser });
 ```
+
+### API Docs
+[See full API Documentation here](https://rustype.vercel.app/)
 
 ### Alternatives?
 - [monads](https://github.com/hqoss/monads) - "Type safe Option, Result, and Either types; inspired by Rust."
