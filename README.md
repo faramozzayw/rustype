@@ -53,6 +53,8 @@ import { Result } from "@faramo.zayw/rustype";
 [See full API Documentation here](https://rustype.vercel.app/)
 
 ### Alternatives?
-- [monads](https://github.com/hqoss/monads) - "Type safe Option, Result, and Either types; inspired by Rust."
-- [rusted](https://github.com/pocka/rusted) - "[Rust](https://github.com/rust-lang/rust)'s syntax features for javascript."
-- [@pacote/option](https://www.npmjs.com/package/@pacote/option) - "[Option](https://doc.rust-lang.org/std/option/enum.Option.html) type inspired by Rust."
+
+- [monads](https://github.com/hqoss/monads) - «Type safe Option, Result, and Either types; inspired by Rust.»
+- [rusted](https://github.com/pocka/rusted) - «[Rust](https://github.com/rust-lang/rust)'s syntax features for javascript.»
+- [@pacote/option](https://www.npmjs.com/package/@pacote/option) - «[Option](https://doc.rust-lang.org/std/option/enum.Option.html) type inspired by Rust.»
+- [ReScript](https://rescript-lang.org/ ) - «The JavaScript-like language you have been waiting for.»
