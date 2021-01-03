@@ -1,8 +1,8 @@
 import clone from "clone-deep";
 
-import { OptionType } from "./types";
-import { Some, None } from "./optionValue";
-import { identity } from "./convert";
+import { OptionType } from "../types";
+import { Some, None } from "./values";
+import { identity } from "../convert";
 
 export class Option<T> {
 	private data: OptionType<T>;

@@ -1,6 +1,7 @@
-import { ResultVariants } from "./types";
-import { None, Some } from "./optionValue";
-import { Option } from "./option";
+import clone from "clone-deep";
+
+import { ResultVariants } from "../types";
+import { None, Some, Option } from "../Option";
 
 export class Result<T, E> {
 	private type: ResultVariants;
@@ -14,6 +15,28 @@ export class Result<T, E> {
 		} else {
 			this.error = content as E;
 		}
+	}
+
+	private unwrapFailed(msg: string, error: E | T): never {
+		throw new Error(`${msg}: ${JSON.stringify(error)}`);
+	}
+
+	/**
+	 * Returns a copy for `Ok` of the contained value using its own value.
+	 */
+	private cloneOk(): T {
+		if (this.isOk()) return clone(this.data);
+
+		throw Error("called `Result::cloneOk()` on a `Error` value");
+	}
+
+	/**
+	 * Returns a copy for `Err` of the contained value using its own value.
+	 */
+	private cloneErr(): E {
+		if (this.isErr()) return clone(this.error);
+
+		throw Error("called `Result::cloneErr()` on a `Ok` value");
 	}
 
 	/** Returns `true` if the result is `Ok`. */
@@ -64,6 +87,112 @@ export class Result<T, E> {
 		if (this.isOk()) return None();
 
 		return Some(this.error);
+	}
+
+	/**
+	 * Returns the contained `Ok` value, consuming the `self` value.
+	 *
+	 * Because this function may panic, its use is generally discouraged. Instead, prefer to use pattern matching and handle the `Err` case explicitly, or call `unwrap_or`, `unwrap_or_else`, or `unwrap_or_default`.
+	 *
+	 * ### Panics
+	 * Panics if the value is an `Err`, with a panic message provided by the `Err`'s value.
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(new Ok(5).unwrap()).toEqual(5);
+	 * expect(new Ok([1, 3, 4]).unwrap()).toEqual([1, 3, 4]);
+	 *
+	 * expect(
+	 * 	new Err({
+	 * 		msg: "Random text",
+	 * 		code: 15,
+	 * 	}).unwrap,
+	 * ).toThrow(Error);
+	 * ```
+	 */
+	public unwrap(): T | never {
+		if (this.isErr()) {
+			this.unwrapFailed(
+				"called `Result::unwrap()` on a `Error` value",
+				this.error,
+			);
+		}
+
+		return this.data;
+	}
+
+	/**
+	 * Returns the contained `Err` value, consuming the `self` value.
+	 *
+	 * ### Panics
+	 * Panics if the value is an Ok, with a custom panic message provided by the Ok's value.
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(new Ok(5).unwrapErr).toThrow(Error);
+	 *
+	 * expect(
+	 * 	new Err({
+	 * 		msg: "Random text",
+	 * 		code: 15,
+	 * 	}).unwrapErr(),
+	 * ).toEqual({
+	 * 	msg: "Random text",
+	 * 	code: 15,
+	 * });
+	 * ```
+	 */
+	public unwrapErr(): E | never {
+		if (this.isOk())
+			this.unwrapFailed(
+				"called `Result::unwrap_err()` on an `Ok` value",
+				this.data,
+			);
+
+		return this.error;
+	}
+
+	/**
+	 * Returns the contained `Ok` value or a provided default.
+	 * 
+	 * Arguments passed to `unwrap_or` are eagerly evaluated; if you are passing the result of a function call, it is recommended to use `unwrap_or_else`, which is lazily evaluated.
+	 * 
+	 * ### Example
+	 * ```ts
+	 * expect(
+	 * 	new Ok({
+	 * 		test: true,
+	 * 	}).unwrapOr({ test: false }),
+	 * ).toEqual({
+	 * 	test: true,
+	 * });
+
+	 * expect(new Err(5).unwrapOr({ test: false })).toEqual({
+	 * 	test: false,
+	 * });
+	 * ```
+	 */
+	public unwrapOr(defaultVal: T): T {
+		if (this.isErr()) return defaultVal;
+
+		return this.data;
+	}
+
+	/**
+	 * Returns the contained `Ok` value or computes it from a closure.
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(new Ok("OK").unwrapOrElse(() => "OK")).toEqual("OK");
+	 * expect(new Err("Error").unwrapOrElse(() => "Else")).toEqual("Else");
+	 * ```
+	 */
+	public unwrapOrElse<F extends () => T>(fn: F): T {
+		if (this.isErr()) {
+			return fn();
+		}
+
+		return this.data;
 	}
 
 	/**
@@ -151,6 +280,29 @@ export class Result<T, E> {
 		if (this.isOk()) return new Ok(this.data);
 
 		return new Err(fn(this.error));
+	}
+
+	/**
+	 * Calls op if the result is Ok, otherwise returns the Err value of self.
+	 *
+	 * This function can be used for control flow based on Result values.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const ok = new Ok(25);
+	 * const sq = (x: number) => new Ok(x * x);
+	 *
+	 * // 25 * 25 => 625 + 5 => 630
+	 * const result = ok.andThen(sq).andThen((x) => new Ok(x + 5));
+	 * expect(result.unwrap()).toEqual(630);
+	 * ```
+	 */
+	public andThen<U extends T, F extends (data: T) => Result<U, E>>(
+		fn: F,
+	): Result<U, E> {
+		if (this.isErr()) return new Err(this.cloneErr());
+
+		return fn(this.cloneOk());
 	}
 }
 

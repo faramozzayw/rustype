@@ -1,5 +1,5 @@
-import { Option } from "./option";
-import { OptionType } from "./types";
+import { Option } from "./Option";
+import { OptionType } from "./../types";
 
 export function Some<T>(some: OptionType<T>) {
 	if (typeof some === "undefined" || some === null) {

@@ -33,6 +33,58 @@ describe("Result", () => {
 		expect(err.err()).toEqual(Some("err"));
 	});
 
+	it("unwrap", () => {
+		expect(new Ok(5).unwrap()).toEqual(5);
+		expect(new Ok([1, 3, 4]).unwrap()).toEqual([1, 3, 4]);
+		expect(
+			new Ok({
+				test: 4,
+			}).unwrap(),
+		).toEqual({
+			test: 4,
+		});
+
+		expect(
+			new Err({
+				msg: "Random text",
+				code: 15,
+			}).unwrap,
+		).toThrow(Error);
+	});
+
+	it("unwrapErr", () => {
+		expect(new Ok(5).unwrapErr).toThrow(Error);
+
+		expect(
+			new Err({
+				msg: "Random text",
+				code: 15,
+			}).unwrapErr(),
+		).toEqual({
+			msg: "Random text",
+			code: 15,
+		});
+	});
+
+	it("unwrapOr", () => {
+		expect(
+			new Ok({
+				test: true,
+			}).unwrapOr({ test: false }),
+		).toEqual({
+			test: true,
+		});
+
+		expect(new Err(5).unwrapOr({ test: false })).toEqual({
+			test: false,
+		});
+	});
+
+	it("unwrapOrElse", () => {
+		expect(new Ok("OK").unwrapOrElse(() => "OK")).toEqual("OK");
+		expect(new Err("Error").unwrapOrElse(() => "Else")).toEqual("Else");
+	});
+
 	it("map", () => {
 		const x: Result<number, string> = new Err("5");
 		expect(x.map((item) => item * 5)).toEqual(new Err("5"));
@@ -83,5 +135,14 @@ describe("Result", () => {
 
 		const y: Result<number, number> = new Err(13);
 		expect(y.mapErr(stringify)).toEqual(new Err("error code: 13"));
+	});
+
+	it("andThen", () => {
+		const ok = new Ok(25);
+		const sq = (x: number) => new Ok(x * x);
+
+		// 25 * 25 => 625 + 5 => 630
+		const result = ok.andThen(sq).andThen((x) => new Ok(x + 5));
+		expect(result.unwrap()).toEqual(630);
 	});
 });
