@@ -49,10 +49,11 @@ import { Result, Err, Ok } from "@faramo.zayw/rustype";
 
 const safeAdd = (a: number, b: number): Result<number, string> => {
 	if(Number.isSafeInteger(a) || Number.isSafeInteger(b)) {
-
+		const sum = a + b;
+		return Number.isSafeInteger(sum) ? sum : Err("The sum result is not a safe integer.");
 	}
 	
-	return Err("Some of args isn't safe integer"); 
+	return Err("Some of the arguments are not safe integers."); 
 }
 ```
 
