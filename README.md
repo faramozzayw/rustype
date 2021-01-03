@@ -46,7 +46,6 @@ const myUser = fetchUser(1297)
 ```ts
 import { Result, Err, Ok } from "@faramo.zayw/rustype";
 
-
 const safeAdd = (a: number, b: number): Result<number, string> => {
 	if(Number.isSafeInteger(a) && Number.isSafeInteger(b)) {
 		const sum = a + b;
@@ -62,7 +61,7 @@ console.log(safeAdd(Number.MAX_SAFE_INTEGER  - 1, 7)); // Err("The sum result is
 ```
 
 ### API Docs
-[See full API Documentation here](https://rustype.vercel.app/)
+You can see the documentation [here](https://rustype.vercel.app/).
 
 ### Alternatives?
 
@@ -70,3 +69,6 @@ console.log(safeAdd(Number.MAX_SAFE_INTEGER  - 1, 7)); // Err("The sum result is
 - [rusted](https://github.com/pocka/rusted) - «[Rust](https://github.com/rust-lang/rust)'s syntax features for javascript.»
 - [@pacote/option](https://www.npmjs.com/package/@pacote/option) - «[Option](https://doc.rust-lang.org/std/option/enum.Option.html) type inspired by Rust.»
 - [ReScript](https://rescript-lang.org/ ) - «The JavaScript-like language you have been waiting for.»
+
+### License
+MIT
