@@ -62,10 +62,10 @@ export class Result<T, E> {
 	 *
 	 * ### Example
 	 * ```ts
-	 * const ok = new Ok("ok");
+	 * const ok = Ok("ok");
 	 * expect(ok.ok()).toEqual(Some("ok"));
 	 *
-	 * const err = new Err("err");
+	 * const err = Err("err");
 	 * expect(err.ok()).toEqual(None());
 	 * ```
 	 */
@@ -82,10 +82,10 @@ export class Result<T, E> {
 	 *
 	 * ### Example
 	 * ```ts
-	 * const ok = new Ok("ok");
+	 * const ok = Ok("ok");
 	 * expect(ok.err()).toEqual(None());
 	 *
-	 * const err = new Err("err");
+	 * const err = Err("err");
 	 * expect(err.err()).toEqual(Some("err"));
 	 * ```
 	 */
@@ -105,11 +105,11 @@ export class Result<T, E> {
 	 *
 	 * ### Example
 	 * ```ts
-	 * expect(new Ok(5).unwrap()).toEqual(5);
-	 * expect(new Ok([1, 3, 4]).unwrap()).toEqual([1, 3, 4]);
+	 * expect(Ok(5).unwrap()).toEqual(5);
+	 * expect(Ok([1, 3, 4]).unwrap()).toEqual([1, 3, 4]);
 	 *
 	 * expect(
-	 * 	new Err({
+	 * 	Err({
 	 * 		msg: "Random text",
 	 * 		code: 15,
 	 * 	}).unwrap,
@@ -135,10 +135,10 @@ export class Result<T, E> {
 	 *
 	 * ### Example
 	 * ```ts
-	 * expect(new Ok(5).unwrapErr).toThrow(Error);
+	 * expect(Ok(5).unwrapErr).toThrow(Error);
 	 *
 	 * expect(
-	 * 	new Err({
+	 * 	Err({
 	 * 		msg: "Random text",
 	 * 		code: 15,
 	 * 	}).unwrapErr(),
@@ -166,14 +166,14 @@ export class Result<T, E> {
 	 * ### Example
 	 * ```ts
 	 * expect(
-	 * 	new Ok({
+	 * 	Ok({
 	 * 		test: true,
 	 * 	}).unwrapOr({ test: false }),
 	 * ).toEqual({
 	 * 	test: true,
 	 * });
 
-	 * expect(new Err(5).unwrapOr({ test: false })).toEqual({
+	 * expect(Err(5).unwrapOr({ test: false })).toEqual({
 	 * 	test: false,
 	 * });
 	 * ```
@@ -189,8 +189,8 @@ export class Result<T, E> {
 	 *
 	 * ### Example
 	 * ```ts
-	 * expect(new Ok("OK").unwrapOrElse(() => "OK")).toEqual("OK");
-	 * expect(new Err("Error").unwrapOrElse(() => "Else")).toEqual("Else");
+	 * expect(Ok("OK").unwrapOrElse(() => "OK")).toEqual("OK");
+	 * expect(Err("Error").unwrapOrElse(() => "Else")).toEqual("Else");
 	 * ```
 	 */
 	public unwrapOrElse<F extends () => T>(fn: F): T {
@@ -208,11 +208,11 @@ export class Result<T, E> {
 	 *
 	 * ### Example
 	 * ```ts
-	 * const x: Result<number, string> = new Err("5");
-	 * expect(x.map((item) => item * 5)).toEqual(new Err("5"));
+	 * const x: Result<number, string> = Err("5");
+	 * expect(x.map((item) => item * 5)).toEqual(Err("5"));
 	 *
-	 * const y: Result<number, string> = new Ok(5);
-	 * expect(y.map((item) => item * 5)).toEqual(new Ok(25));
+	 * const y: Result<number, string> = Ok(5);
+	 * expect(y.map((item) => item * 5)).toEqual(Ok(25));
 	 * ```
 	 */
 	public map<U, F extends (data: T) => U>(fn: F): Result<U, E> {
@@ -259,7 +259,7 @@ export class Result<T, E> {
 	 * 	),
 	 * ).toEqual("FOO");
 
-	 * const y: Result<string, string> = new Err("BaR");
+	 * const y: Result<string, string> = Err("BaR");
 	 * expect(
 	 * 	y.mapOrElse(
 	 * 		(err) => err.toLowerCase(),
@@ -284,11 +284,11 @@ export class Result<T, E> {
 	 * ```ts
 	 * const stringify = (x: number) => `error code: ${x}`;
 	 *
-	 * const x: Result<number, number> = new Ok(2);
-	 * expect(x.mapErr(stringify)).toEqual(new Ok(2));
+	 * const x: Result<number, number> = Ok(2);
+	 * expect(x.mapErr(stringify)).toEqual(Ok(2));
 	 *
-	 * const y: Result<number, number> = new Err(13);
-	 * expect(y.mapErr(stringify)).toEqual(new Err("error code: 13"));
+	 * const y: Result<number, number> = Err(13);
+	 * expect(y.mapErr(stringify)).toEqual(Err("error code: 13"));
 	 * ```
 	 */
 	public mapErr<F>(fn: (err: E) => F): Result<T, F> {
@@ -304,11 +304,11 @@ export class Result<T, E> {
 	 *
 	 * ### Example
 	 * ```ts
-	 * const ok = new Ok(25);
-	 * const sq = (x: number) => new Ok(x * x);
+	 * const ok = Ok(25);
+	 * const sq = (x: number) => Ok(x * x);
 	 *
 	 * // 25 * 25 => 625 + 5 => 630
-	 * const result = ok.andThen(sq).andThen((x) => new Ok(x + 5));
+	 * const result = ok.andThen(sq).andThen((x) => Ok(x + 5));
 	 * expect(result.unwrap()).toEqual(630);
 	 * ```
 	 */
@@ -330,8 +330,8 @@ export class Result<T, E> {
 	 *
 	 * ### Example
 	 * ```ts
-	 * const x: Result<Option<number>, string> = new Ok(Some(5));
-	 * const y: Option<Result<number, string>> = Some(new Ok(5));
+	 * const x: Result<Option<number>, string> = Ok(Some(5));
+	 * const y: Option<Result<number, string>> = Some(Ok(5));
 	 *
 	 * expect(x.transpose()).toEqual(y);
 	 * ```
@@ -359,11 +359,11 @@ export class Result<T, E> {
 	 *
 	 * ### Example
 	 * ```ts
-	 * expect(new Ok(new Ok(50)).flatten()).toEqual(new Ok(50));
-	 * expect(new Ok(50).flatten().unwrap()).toEqual(50);
+	 * expect(Ok(Ok(50)).flatten()).toEqual(Ok(50));
+	 * expect(Ok(50).flatten().unwrap()).toEqual(50);
 	 *
-	 * expect(new Ok(new Err("Error")).flatten()).toEqual(new Err("Error"));
-	 * expect(new Err("Error").flatten()).toEqual(new Err("Error"));
+	 * expect(Ok(Err("Error")).flatten()).toEqual(Err("Error"));
+	 * expect(Err("Error").flatten()).toEqual(Err("Error"));
 	 * ```
 	 */
 	public flatten(): Result<T, E> {
