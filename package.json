@@ -1,14 +1,39 @@
 {
 	"name": "@faramo.zayw/rustype",
-	"version": "0.0.1",
-	"main": "index.js",
+	"version": "0.1.0",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"description": "Type safe Option and Result from the Rust programming language.",
 	"repository": "https://github.com/faramozzayw/rustype.git",
 	"author": "faramozzayw <faramo.zayw@gmail.com>",
 	"license": "MIT",
+	"keywords": [
+		"monads",
+		"option",
+		"result",
+		"javascript",
+		"js",
+		"typescript",
+		"node",
+		"node.js",
+		"maybe",
+		"functional programming"
+	],
+	"bugs": {
+		"url": "https://github.com/faramozzayw/rustype/issues"
+	},
+	"homepage": "https://rustype.vercel.app",
 	"scripts": {
+		"build": "rm -rf ./lib && tsc",
 		"test": "jest",
 		"test:watch": "jest --watch",
 		"docs": "typedoc"
+	},
+	"files": [
+		"lib/"
+	],
+	"publishConfig": {
+		"access": "public"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.11.6",

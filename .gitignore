@@ -1,6 +1,9 @@
 # docs
 docs/
 
+# lib output
+lib/
+
 # Logs
 logs
 *.log
