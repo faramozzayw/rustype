@@ -4,10 +4,14 @@ import { ResultVariants } from "../types";
 import { None, Some, Option } from "../Option";
 
 export class Result<T, E> {
+	/** @ignore */
 	private type: ResultVariants;
+	/** @ignore */
 	private error?: E;
+	/** @ignore */
 	private data?: T;
 
+	/** @ignore */
 	protected constructor(type: ResultVariants, content: T | E) {
 		this.type = type;
 		if (type === "ok") {
@@ -16,13 +20,14 @@ export class Result<T, E> {
 			this.error = content as E;
 		}
 	}
-
+	/** @ignore */
 	private unwrapFailed(msg: string, error: E | T): never {
 		throw new Error(`${msg}: ${JSON.stringify(error)}`);
 	}
 
 	/**
 	 * Returns a copy for `Ok` of the contained value using its own value.
+	 * @ignore
 	 */
 	private cloneOk(): T {
 		if (this.isOk()) return clone(this.data);
@@ -32,6 +37,7 @@ export class Result<T, E> {
 
 	/**
 	 * Returns a copy for `Err` of the contained value using its own value.
+	 * @ignore
 	 */
 	private cloneErr(): E {
 		if (this.isErr()) return clone(this.error);
@@ -199,6 +205,15 @@ export class Result<T, E> {
 	 * Maps a `Result<T, E>` to `Result<U, E>` by applying a function to a contained `Ok` value,
 	 * leaving an `Err` value untouched.
 	 * This function can be used to compose the results of two functions.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const x: Result<number, string> = new Err("5");
+	 * expect(x.map((item) => item * 5)).toEqual(new Err("5"));
+	 *
+	 * const y: Result<number, string> = new Ok(5);
+	 * expect(y.map((item) => item * 5)).toEqual(new Ok(25));
+	 * ```
 	 */
 	public map<U, F extends (data: T) => U>(fn: F): Result<U, E> {
 		if (this.isErr()) return new Err(this.error);

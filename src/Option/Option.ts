@@ -7,16 +7,20 @@ import { Ok, Err, Result } from "../Result";
 import { Options } from "prettier";
 
 export class Option<T> {
+	/** @ignore */
 	private data: OptionType<T>;
 
+	/** @ignore */
 	constructor(data: OptionType<T>) {
 		this.data = data;
 	}
 
+	/** @ignore */
 	private clone() {
 		return clone(this.data);
 	}
 
+	/** @ignore */
 	private unwrapFailed(msg: string, error: T): never {
 		throw new Error(`${msg}: ${JSON.stringify(error)}`);
 	}
@@ -34,7 +38,7 @@ export class Option<T> {
 	/**
 	 * Returns the contained Some value, consuming the self value.
 	 *
-	 * ### Throw an error
+	 * ### Panics
 	 *
 	 * Panics if the value is a `None` with a custom panic message provided by msg. [`Error`]
 	 */
@@ -49,9 +53,16 @@ export class Option<T> {
 	/**
 	 * Returns the contained `Some` value, consuming the self value.
 	 *
-	 * ### Throw an error
+	 * ### Panics
 	 *
-	 * Throw an error if the self value equals `None`. [`TypeError`]
+	 * Panics if the self value equals `None`. [`TypeError`]
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(Some(5).unwrap()).toEqual(5);
+	 * expect(Some([1, 3, 4]).unwrap()).toEqual([1, 3, 4]);
+	 * expect(None().unwrap).toThrow(TypeError);
+	 * ```
 	 */
 	public unwrap(): T | never {
 		if (this.isNone()) {
@@ -133,7 +144,28 @@ export class Option<T> {
 		return fn(this.clone());
 	}
 
-	/** Applies a function to the contained value (if any), or computes a default (if not). */
+	/**
+	 * Applies a function to the contained value (if any), or computes a default (if not).
+	 *
+	 * ### Example
+	 * ```ts
+	 * const defaultStatus: number = 500;
+	 *
+	 * const some = Some({ status: 200 });
+	 * const mappedSome = some.mapOrElse(
+	 * 	() => defaultStatus,
+	 * 	(data) => data.status,
+	 * );
+	 * expect(mappedSome).toEqual(200);
+	 *
+	 * const none = None();
+	 * const mappedNone = none.mapOrElse(
+	 * 	() => defaultStatus,
+	 * 	(data) => data.status,
+	 * );
+	 * expect(mappedNone).toEqual(500);
+	 * ```
+	 */
 	public mapOrElse<U, D extends () => U, F extends (data: T) => U>(
 		defaultFn: D,
 		fn: F,
@@ -147,6 +179,16 @@ export class Option<T> {
 	 * Returns None if the option is `None`, otherwise calls f with the wrapped value and returns the result.
 	 *
 	 * Some languages call this operation **flatmap**.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const some = Some(25);
+	 * const sq = (x: number) => Some(x * x);
+	 *
+	 * // 25 * 25 => 625 + 5 => 630
+	 * const result = some.andThen(sq).andThen((x) => Some(x + 5));
+	 * expect(result.unwrap()).toEqual(630);
+	 * ```
 	 */
 	public andThen<U extends T, F extends (data: T) => Option<U>>(
 		fn: F,
@@ -160,6 +202,18 @@ export class Option<T> {
 	 * Returns `None` if the option is `None`, otherwise calls `predicate` with the wrapped value and returns:
 	 * - [`Some(t)`] if `predicate` returns `true` (where `t` is the wrapped value), and
 	 * - `None` if `predicate` returns `false`.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const result = Some({ status: 200 })
+	 * 	   .filter((item) => item.status === 200)
+	 * 	   .map((_) => "Ok")
+	 * 	   .unwrapOr("Error");
+	 *
+	 * expect(result).toEqual("Ok");
+	 *
+	 * expect(Some(200).filter((item) => item === 200).unwrapOr(500)).toEqual(200);
+	 * ```
 	 */
 	public filter<P extends (data: T) => boolean>(predicate: P): Option<T> {
 		if (this.isNone()) return None();
