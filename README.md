@@ -2,6 +2,11 @@
 
 Type safe Option and Result from the Rust programming language.
 
+![Minified](https://badgen.net/bundlephobia/min/@faramo.zayw/rustype)
+![Version](https://badgen.net/npm/v/@faramo.zayw/rustype)
+![Types](https://badgen.net/npm/types/@faramo.zayw/rustype)
+![Dependency count](https://badgen.net/bundlephobia/dependency-count/@faramo.zayw/rustype)
+
 ## Install
 
 Using npm
