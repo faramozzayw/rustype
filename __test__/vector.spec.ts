@@ -35,4 +35,30 @@ describe("Result", () => {
 			new Vector(3, 1, 2, -15),
 		);
 	});
+
+	it("splitAt", () => {
+		{
+			const [left, right] = new Vector(1, 2, 3, 4, 5, 6).splitAt(0);
+			expect(left).toEqual(new Vector());
+			expect(right).toEqual(new Vector(1, 2, 3, 4, 5, 6));
+		}
+
+		{
+			const [left, right] = new Vector(1, 2, 3, 4, 5, 6).splitAt(2);
+			expect(left).toEqual(new Vector(1, 2));
+			expect(right).toEqual(new Vector(3, 4, 5, 6));
+		}
+
+		{
+			const [left, right] = new Vector(1, 2, 3, 4, 5, 6).splitAt(6);
+			expect(left).toEqual(new Vector(1, 2, 3, 4, 5, 6));
+			expect(right).toEqual(new Vector());
+		}
+	});
+
+	it("repeat", () => {
+		const base = new Vector(1, 2);
+
+		expect(base.repeat(3)).toEqual([1, 2, 1, 2, 1, 2]);
+	});
 });

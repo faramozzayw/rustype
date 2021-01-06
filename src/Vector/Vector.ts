@@ -1,6 +1,7 @@
 import { Options } from "prettier";
 import { None, Option, Some } from "../Option";
 import { Panic } from "../panic";
+import { range } from "../utils";
 
 export class Vector<T> extends Array<T> {
 	static get [Symbol.species]() {
@@ -9,6 +10,10 @@ export class Vector<T> extends Array<T> {
 
 	public static default() {
 		return new Vector();
+	}
+
+	public static fromArray<AT>(array: AT[]): Vector<AT> {
+		return new Vector(...array);
 	}
 
 	/** Returns true if the vector contains no elements. */
@@ -50,25 +55,25 @@ export class Vector<T> extends Array<T> {
 	 * expect(new Vector().splitFirst()).toEqual(None());
 	 * ```
 	 */
-	public splitFirst(): Option<[T, T[]]> {
+	public splitFirst(): Option<[T, Vector<T>]> {
 		if (this.isEmpty()) return None();
 
 		const [first, ...others] = this;
 
-		return Some([first, others]);
+		return Some([first, Vector.fromArray(others)]);
 	}
 
 	/**
-     * Returns the last element of the slice, or `None` if it is empty.
-     * 
-     * ### Example
-     * ```ts
-     * expect(Vector.default().first()).toEqual(None())
+	 * Returns the last element of the slice, or `None` if it is empty.
+	 * 
+	 * ### Example
+	 * ```ts
+	 * expect(Vector.default().first()).toEqual(None())
 
-     * expect(new Vector(1, 3, 4, 6).first()).toEqual(Some(6))
-     * expect(new Vector().first()).toEqual(None());
-     * ```
-     */
+	 * expect(new Vector(1, 3, 4, 6).first()).toEqual(Some(6))
+	 * expect(new Vector().first()).toEqual(None());
+	 * ```
+	 */
 	public last(): Option<T> {
 		const value = this[this.length - 1];
 		return typeof value === "undefined" ? None() : Some(value);
@@ -83,14 +88,14 @@ export class Vector<T> extends Array<T> {
 	 * expect(new Vector().splitLast()).toEqual(None());
 	 * ```
 	 */
-	public splitLast(): Option<[T, T[]]> {
+	public splitLast(): Option<[T, Vector<T>]> {
 		if (this.isEmpty()) return None();
 
 		const lastIndex = this.length - 1;
 		const last = this[lastIndex];
 		const others = this.filter((_, index) => lastIndex !== index);
 
-		return Some([last, others]);
+		return Some([last, Vector.fromArray(others)]);
 	}
 
 	/**
@@ -110,7 +115,7 @@ export class Vector<T> extends Array<T> {
 	 * expect(new Vector(1, 3, 2, -15).swap(1, 0)).toEqual(new Vector(3, 1, 2, -15));
 	 * ```
 	 */
-	public swap(a: number, b: number): Vector<T> {
+	public swap(a: number, b: number): Vector<T> | never {
 		if (this.checkIndex(a) && this.checkIndex(b)) {
 			[this[a], this[b]] = [this[b], this[a]];
 		} else {
@@ -118,5 +123,41 @@ export class Vector<T> extends Array<T> {
 		}
 
 		return this;
+	}
+
+	/**
+	 * Divides one slice into two at an index.
+	 *
+	 * The first will contain all indices from `[0, mid)` (excluding the index `mid` itself) and the second
+	 * will contain all indices from `[mid, len)` (excluding the index `len` itself).
+	 *
+	 * ### Panics
+	 * Panics if mid > len.
+	 */
+	public splitAt(mid: number): [Vector<T>, Vector<T>] | never {
+		if (mid > this.length) {
+			throw new Panic("mid > len");
+		}
+
+		let left: Vector<T> = new Vector();
+		let right: Vector<T> = new Vector();
+
+		this.forEach((item, index) => {
+			const predicate = index < mid;
+			(predicate ? left : right).push(item);
+		});
+
+		return [left, right];
+	}
+
+	/** Returns `true` if `needle` is a prefix of the slice. */
+	public repeat(n: number) {
+		let result: T[] = [];
+
+		for (const it of range(0, n)) {
+			result = result.concat(...this);
+		}
+
+		return Vector.fromArray(result);
 	}
 }
