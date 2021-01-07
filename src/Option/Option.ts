@@ -140,18 +140,6 @@ export class Option<T> {
 	}
 
 	/**
-	 * Returns the contained `Some` value or throw exception with a provided error.
-	 *
-	 */
-	public unwrapOrThrow<E extends Error>(err: E): T | never {
-		if (this.isNone()) {
-			throw err;
-		}
-
-		return this.data;
-	}
-
-	/**
 	 * Maps an `Option<T>` to `Option<U>` by applying a function to a contained value.
 	 *
 	 * ### Example

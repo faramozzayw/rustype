@@ -86,16 +86,6 @@ describe("Option", () => {
 		expect(none.unwrapOrElse(() => "NONE")).toEqual("NONE");
 	});
 
-	it("unwrapOrThrow", () => {
-		expect(Some(5).unwrap()).toEqual(5);
-
-		try {
-			None().unwrapOrThrow(new Error("Error"));
-		} catch (e: unknown) {
-			expect((e as Error).message).toEqual("Error");
-		}
-	});
-
 	it("unsafe_insert", () => {
 		expect(None().unsafe_insert(5)).toEqual(Some(5));
 		expect(Some(0).unsafe_insert(65)).toEqual(Some(65));
