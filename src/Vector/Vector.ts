@@ -150,8 +150,20 @@ export class Vector<T> extends Array<T> {
 		return [left, right];
 	}
 
-	/** Returns `true` if `needle` is a prefix of the slice. */
-	public repeat(n: number) {
+	/**
+	 * Creates a vector by repeating a slice `n` times.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const base = new Vector(1, 2);
+	 *
+	 * expect(base.repeat(3)).toEqual([1, 2, 1, 2, 1, 2]);
+	 * expect(base.repeat(2)).toEqual([1, 2, 1, 2]);
+	 *
+	 * expect(Vector.default().repeat(2)).toEqual([]);
+	 * ```
+	 */
+	public repeat(n: number): Vector<T> {
 		let result: T[] = [];
 
 		for (const it of range(0, n)) {
@@ -159,5 +171,22 @@ export class Vector<T> extends Array<T> {
 		}
 
 		return Vector.fromArray(result);
+	}
+
+	/**
+	 * Clears the vector, removing all values.
+	 *
+	 * Note that this method has no effect on the allocated capacity of the vector.
+	 *
+	 * ### Example
+	 * ```ts
+	 * let base = new Vector(1, 3, 4, 5, 6, 723, 7);
+	 * base.clear()
+	 * expect(base).toEqual([]);
+	 * expect(base.length).toEqual(0)
+	 * ```
+	 */
+	public clear(): void {
+		while (this.pop()) {}
 	}
 }

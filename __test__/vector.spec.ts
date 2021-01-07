@@ -60,5 +60,15 @@ describe("Result", () => {
 		const base = new Vector(1, 2);
 
 		expect(base.repeat(3)).toEqual([1, 2, 1, 2, 1, 2]);
+		expect(base.repeat(2)).toEqual([1, 2, 1, 2]);
+
+		expect(Vector.default().repeat(2)).toEqual([]);
+	});
+
+	it("clear", () => {
+		let base = new Vector(1, 3, 4, 5, 6, 723, 7);
+		base.clear();
+		expect(base).toEqual([]);
+		expect(base.length).toEqual(0);
 	});
 });
