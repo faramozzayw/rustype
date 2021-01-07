@@ -1,11 +1,21 @@
 import clone from "clone-deep";
 
-import { OptionType } from "../types";
+import { OptionType, PrimitiveHint } from "../types";
 import { Some, None } from "./values";
 
 import { Ok, Err, Result } from "../Result";
-import { Options } from "prettier";
 
+/**
+ * Type `Option` represents an optional value: every `Option` is either `Some` and contains a value, or `None`, and does not.
+ * `Option` types are very common in Rust code, as they have a number of uses:
+ *
+ * - Initial values
+ * - Return value for otherwise reporting simple errors, where `None` is returned on error
+ * - Optional struct fields
+ * - Optional function arguments
+ * - Nullable values
+ * - Swapping things out of difficult situations
+ */
 export class Option<T> {
 	/** @ignore */
 	private data: OptionType<T>;
@@ -23,6 +33,10 @@ export class Option<T> {
 	/** @ignore */
 	private unwrapFailed(msg: string, error: T): never {
 		throw new Error(`${msg}: ${JSON.stringify(error)}`);
+	}
+
+	public static makeDefault() {
+		return None();
 	}
 
 	/** Returns `true` if the option is a `Some` value. */
@@ -313,6 +327,28 @@ export class Option<T> {
 		}
 
 		return Some(this.data);
+	}
+
+	/**
+	 * Returns a string representation of an object.
+	 *
+	 * @override
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(None().toString()).toEqual("None");
+	 *
+	 * expect(Some(5).toString()).toEqual("Some(5)");
+	 * expect(Some(Some(5)).toString()).toEqual("Some(Some(5))");
+	 *
+	 * // BUT
+	 * expect(Some({ code: 15 }).toString()).toEqual("Some([object Object])");
+	 * ```
+	 */
+	toString() {
+		if (this.isNone()) return "None";
+
+		return `Some(${this.data.toString()})`;
 	}
 
 	/** Returns `None` if the option is `None`, otherwise returns `optb`. */

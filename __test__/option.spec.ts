@@ -1,6 +1,15 @@
 import { None, Some, Option, Ok, Err, Result } from "./../src";
 
 describe("Option", () => {
+	it("toString", () => {
+		expect(None().toString()).toEqual("None");
+
+		expect(Some(5).toString()).toEqual("Some(5)");
+		expect(Some(Some(5)).toString()).toEqual("Some(Some(5))");
+
+		expect(Some({ code: 15 }).toString()).toEqual("Some([object Object])");
+	});
+
 	it("is_some", () => {
 		const some = Some(5);
 		expect(some.isSome()).toBeTruthy();

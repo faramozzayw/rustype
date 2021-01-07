@@ -375,6 +375,29 @@ export class Result<T, E> {
 
 		return new Ok(this.cloneOk());
 	}
+
+	/**
+	 * Returns a string representation of an object.
+	 *
+	 * @override
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(Err(5).toString()).toEqual(`Err(5)`);
+	 * expect(Err(Err("Error")).toString()).toEqual(`Err(Err(Error))`);
+	 *
+	 * expect(Ok(5).toString()).toEqual("Ok(5)");
+	 * expect(Ok(Ok(5)).toString()).toEqual("Ok(Ok(5))");
+	 *
+	 * // BUT
+	 * expect(Err({ code: 15 }).toString()).toEqual("Err([object Object])");
+	 * ```
+	 */
+	toString() {
+		return this.isOk()
+			? `Ok(${this.data.toString()})`
+			: `Err(${this.error.toString()})`;
+	}
 }
 
 export class Err<E> extends Result<any, E> {
