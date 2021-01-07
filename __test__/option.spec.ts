@@ -128,6 +128,18 @@ describe("Option", () => {
 		expect(mappedNone).toEqual(500);
 	});
 
+	it("okOr", () => {
+		expect(Some(5).okOr("Failed")).toEqual(Ok(5));
+		expect(None().okOr("Failed")).toEqual(Err("Failed"));
+	});
+
+	it("okOrElse", () => {
+		const failFn = () => "Failed";
+
+		expect(Some(5).okOrElse(failFn)).toEqual(Ok(5));
+		expect(None().okOrElse(failFn)).toEqual(Err("Failed"));
+	});
+
 	it("andThen", () => {
 		const some = Some(25);
 		const sq = (x: number) => Some(x * x);

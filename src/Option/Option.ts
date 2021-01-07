@@ -35,6 +35,9 @@ export class Option<T> {
 		throw new Error(`${msg}: ${JSON.stringify(error)}`);
 	}
 
+	/**
+	 * Returns the "default value" for a Option<T> => `None`.
+	 */
 	public static makeDefault() {
 		return None();
 	}
@@ -175,6 +178,45 @@ export class Option<T> {
 		if (this.isNone()) return defaultFn();
 
 		return fn(this.clone());
+	}
+
+	/**
+	 * Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to `Ok(v)` and `None` to `Err(err)`.
+	 *
+	 * Arguments passed to `okOr` are eagerly evaluated; if you are passing the result of a function
+	 * call, it is recommended to use `okOrElse`, which is lazily evaluated.
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(Some(5).okOr("Failed")).toEqual(Ok(5));
+	 * expect(None().okOr("Failed")).toEqual(Err("Failed"));
+	 * ```
+	 */
+	public okOr<E>(err: E): Result<T, E> {
+		if (this.isSome()) {
+			return Ok(this.clone());
+		}
+
+		return Err(err);
+	}
+
+	/**
+	 * Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to `Ok(v)` and `None` to `Err(err())`.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const failFn = () => "Failed";
+	 *
+	 * expect(Some(5).okOrElse(failFn)).toEqual(Ok(5));
+	 * expect(None().okOrElse(failFn)).toEqual(Err("Failed"));
+	 * ```
+	 */
+	public okOrElse<E, F extends () => E>(fn: F) {
+		if (this.isNone()) {
+			return Err(fn());
+		}
+
+		return Ok(this.clone());
 	}
 
 	/**
