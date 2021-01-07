@@ -68,6 +68,25 @@ export class Option<T> {
 	}
 
 	/**
+	 * Inserts value into the option
+	 *
+	 * If the option already contains a value, the old value is dropped.
+	 *
+	 * @unsafe
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(None().unsafe_insert(5)).toEqual(Some(5));
+	 * expect(Some(0).unsafe_insert(65)).toEqual(Some(65));
+	 * ```
+	 */
+	public unsafe_insert(val: T): Option<T> {
+		this.data = val;
+
+		return this;
+	}
+
+	/**
 	 * Returns the contained `Some` value, consuming the self value.
 	 *
 	 * ### Panics
@@ -115,6 +134,18 @@ export class Option<T> {
 	public unwrapOrElse<F extends () => T>(fn: F): T {
 		if (this.isNone()) {
 			return fn();
+		}
+
+		return this.data;
+	}
+
+	/**
+	 * Returns the contained `Some` value or throw exception with a provided error.
+	 *
+	 */
+	public unwrapOrThrow<E extends Error>(err: E): T | never {
+		if (this.isNone()) {
+			throw err;
 		}
 
 		return this.data;
