@@ -412,6 +412,11 @@ export class Option<T> {
 		return `Some(${this.data.toString()})`;
 	}
 
+	/**
+	 * The `valueOf()` method is short alias for `unwrap()`.
+	 *
+	 * @override
+	 */
 	valueOf() {
 		return this.unwrap();
 	}
