@@ -412,6 +412,18 @@ export class Option<T> {
 		return `Some(${this.data.toString()})`;
 	}
 
+	valueOf() {
+		return this.unwrap();
+	}
+
+	[Symbol.toPrimitive](hint: PrimitiveHint) {
+		if (hint === "number") {
+			return this.valueOf();
+		}
+
+		return this.toString();
+	}
+
 	/** Returns `None` if the option is `None`, otherwise returns `optb`. */
 	private and<U>(optb: Option<U>): Option<U> {
 		if (this.isNone()) return None();

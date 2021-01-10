@@ -8,6 +8,22 @@ describe("Option", () => {
 		expect(Some(Some(5)).toString()).toEqual("Some(Some(5))");
 
 		expect(Some({ code: 15 }).toString()).toEqual("Some([object Object])");
+
+		expect(`${None()}`).toEqual("None");
+		expect(`${Some(5)}`).toEqual("Some(5)");
+	});
+
+	it("valueOf", () => {
+		expect(Some(5).valueOf()).toEqual(5);
+
+		try {
+			+None();
+		} catch (e: any) {
+			expect((e as Error).message).toEqual(
+				"called `Option::unwrap()` on a `None` value",
+			);
+		}
+		expect(+Some(5)).toEqual(5);
 	});
 
 	it("is_some", () => {
