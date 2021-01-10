@@ -2,6 +2,7 @@ import clone from "clone-deep";
 
 import { PrimitiveHint, ResultVariants } from "../types";
 import { None, Some, Option } from "../Option";
+import { unwrapFailed } from "../utils";
 
 export class Result<T, E> {
 	/** @ignore */
@@ -53,6 +54,42 @@ export class Result<T, E> {
 	/** Returns `true` if the result is `Err`. */
 	public isErr(): boolean {
 		return this.type === "err";
+	}
+
+	/**
+	 *
+	 * Returns the contained `Ok` value, consuming the `self` value.
+	 *
+	 * ### Panics
+	 * Panics if the value is an `Err`, with a panic message including the passed message, and the content of the `Err`.
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(Ok("ok").expect("Testing expect")).toEqual("ok");
+	 *
+	 * try {
+	 * 	Err("fail result").expect("Testing expect")
+	 * } catch (e: unknown) {
+	 * 	expect((e as Error).message).toEqual("Testing expect");
+	 * }
+	 * ```
+	 */
+	public expect(msg: string): T | never {
+		if (this.isErr()) unwrapFailed(msg, this.cloneErr());
+
+		return this.cloneOk();
+	}
+
+	/**
+	 * Returns the contained Err value, consuming the self value.
+	 *
+	 * ### Panics
+	 * Panics if the value is an Ok, with a panic message including the passed message, and the content of the Ok.
+	 */
+	public expectErr(msg: string): E | never {
+		if (this.isOk()) unwrapFailed(msg, this.cloneOk());
+
+		return this.cloneErr();
 	}
 
 	/**

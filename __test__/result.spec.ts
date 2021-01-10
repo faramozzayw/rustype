@@ -27,6 +27,28 @@ describe("Result", () => {
 		expect(ok.isErr()).toBeFalsy();
 	});
 
+	it("expect", () => {
+		expect(Ok("ok").expect("Testing expect")).toEqual("ok");
+
+		try {
+			Err("fail result").expect("Testing expect");
+		} catch (e: unknown) {
+			expect((e as Error).message).toMatch(/Testing expect/gi);
+		}
+	});
+
+	it("expectErr", () => {
+		expect(Err("fail result").expectErr("Testing expect")).toEqual(
+			"fail result",
+		);
+
+		try {
+			Ok("ok result").expectErr("Testing expect");
+		} catch (e: unknown) {
+			expect((e as Error).message).toMatch(/Testing expect/gi);
+		}
+	});
+
 	it("ok", () => {
 		const ok = Ok("ok");
 		expect(ok.ok()).toEqual(Some("ok"));

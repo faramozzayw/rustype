@@ -8,15 +8,17 @@
   - `okOr`
   - `okOrElse`
   - override `toString`
-  - override `valueOf` to be used as a unary plus
-- update docs
 
 ### `Result`
 
 - add new features:
+
   - static `makeDefault`
   - override `toString`
-  - override `valueOf`
+  - `expect`
+  - `expectErr`
+
+- update docs
 
 ## 0.1.0 (December 30, 2020)
 
