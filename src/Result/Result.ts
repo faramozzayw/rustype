@@ -1,6 +1,6 @@
 import clone from "clone-deep";
 
-import { PrimitiveHint, ResultVariants } from "../types";
+import { ResultVariants } from "../types";
 import { None, Some, Option } from "../Option";
 import { unwrapFailed } from "../utils";
 
@@ -20,10 +20,6 @@ export class Result<T, E> {
 		} else {
 			this.error = content as E;
 		}
-	}
-	/** @ignore */
-	private unwrapFailed(msg: string, error: E | T): never {
-		throw new Error(`${msg}: ${JSON.stringify(error)}`);
 	}
 
 	/**
@@ -155,10 +151,7 @@ export class Result<T, E> {
 	 */
 	public unwrap(): T | never {
 		if (this.isErr()) {
-			this.unwrapFailed(
-				"called `Result::unwrap()` on a `Error` value",
-				this.error,
-			);
+			unwrapFailed("called `Result::unwrap()` on a `Error` value", this.error);
 		}
 
 		return this.data;
@@ -187,10 +180,7 @@ export class Result<T, E> {
 	 */
 	public unwrapErr(): E | never {
 		if (this.isOk())
-			this.unwrapFailed(
-				"called `Result::unwrap_err()` on an `Ok` value",
-				this.data,
-			);
+			unwrapFailed("called `Result::unwrap_err()` on an `Ok` value", this.data);
 
 		return this.error;
 	}
@@ -384,7 +374,7 @@ export class Result<T, E> {
 
 			return None();
 		} else {
-			this.unwrapFailed(
+			unwrapFailed(
 				"called `Result::transpose()` on an `Ok` value where `self` is not an `Option`",
 				this.data,
 			);

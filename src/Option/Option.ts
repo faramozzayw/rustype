@@ -1,9 +1,10 @@
 import clone from "clone-deep";
 
-import { OptionType, PrimitiveHint } from "../types";
+import { OptionType } from "../types";
 import { Some, None } from "./values";
 
 import { Ok, Err, Result } from "../Result";
+import { unwrapFailed } from "../utils";
 
 /**
  * Type `Option` represents an optional value: every `Option` is either `Some` and contains a value, or `None`, and does not.
@@ -28,11 +29,6 @@ export class Option<T> {
 	/** @ignore */
 	private clone() {
 		return clone(this.data);
-	}
-
-	/** @ignore */
-	private unwrapFailed(msg: string, error: T): never {
-		throw new Error(`${msg}: ${JSON.stringify(error)}`);
 	}
 
 	/**
@@ -358,7 +354,7 @@ export class Option<T> {
 			const innerError = this.data.unwrap();
 			return Err<E>(innerError);
 		} else {
-			this.unwrapFailed(
+			unwrapFailed(
 				"called `Option::transpose()` on an `Some` value where `self` is not an `Result`",
 				this.data,
 			);
