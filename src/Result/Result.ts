@@ -1,6 +1,6 @@
 import clone from "clone-deep";
 
-import { ResultVariants } from "../types";
+import { PrimitiveHint, ResultVariants } from "../types";
 import { None, Some, Option } from "../Option";
 
 export class Result<T, E> {

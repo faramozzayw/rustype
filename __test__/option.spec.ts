@@ -13,19 +13,6 @@ describe("Option", () => {
 		expect(`${Some(5)}`).toEqual("Some(5)");
 	});
 
-	it("valueOf", () => {
-		expect(Some(5).valueOf()).toEqual(5);
-
-		try {
-			+None();
-		} catch (e: any) {
-			expect((e as Error).message).toEqual(
-				"called `Option::unwrap()` on a `None` value",
-			);
-		}
-		expect(+Some(5)).toEqual(5);
-	});
-
 	it("is_some", () => {
 		const some = Some(5);
 		expect(some.isSome()).toBeTruthy();
