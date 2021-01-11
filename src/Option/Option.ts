@@ -402,7 +402,7 @@ export class Option<T> {
 	 * expect(Some({ code: 15 }).toString()).toEqual("Some([object Object])");
 	 * ```
 	 */
-	toString() {
+	public toString() {
 		if (this.isNone()) return "None";
 
 		return `Some(${this.data.toString()})`;

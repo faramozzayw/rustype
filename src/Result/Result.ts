@@ -4,6 +4,13 @@ import { ResultVariants } from "../types";
 import { None, Some, Option } from "../Option";
 import { unwrapFailed } from "../utils";
 
+/**
+ * Error handling with the Result type.
+ *
+ * `Result<T, E>` is the type used for returning and propagating errors.
+ * `Ok(T)`, representing success and containing a value, and `Err(E)`,
+ * representing error and containing an error value.
+ */
 export class Result<T, E> {
 	/** @ignore */
 	private type: ResultVariants;
@@ -420,7 +427,7 @@ export class Result<T, E> {
 	 * expect(Err({ code: 15 }).toString()).toEqual("Err([object Object])");
 	 * ```
 	 */
-	toString() {
+	public toString() {
 		return this.isOk()
 			? `Ok(${this.data.toString()})`
 			: `Err(${this.error.toString()})`;
