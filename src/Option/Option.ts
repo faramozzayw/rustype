@@ -21,6 +21,8 @@ interface OptionMatch<T, ReturnSome, ReturnNone> {
  * - Optional function arguments
  * - Nullable values
  * - Swapping things out of difficult situations
+ *
+ * @category Option
  */
 export class Option<T> {
 	/** @ignore */

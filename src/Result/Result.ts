@@ -15,6 +15,8 @@ interface ResultMatch<T, E, Ok, Err> {
  * `Result<T, E>` is the type used for returning and propagating errors.
  * `Ok(T)`, representing success and containing a value, and `Err(E)`,
  * representing error and containing an error value.
+ *
+ * @category Result
  */
 export class Result<T, E> {
 	/** @ignore */

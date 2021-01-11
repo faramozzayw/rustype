@@ -3,5 +3,7 @@
 	"out": "docs",
 	"includeVersion": true,
 	"readme": "./README.md",
-	"listInvalidSymbolLinks": true
+	"listInvalidSymbolLinks": true,
+	"categorizeByGroup": true,
+	"theme": "minimal"
 }
