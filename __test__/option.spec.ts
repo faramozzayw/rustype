@@ -37,6 +37,38 @@ describe("Option", () => {
 		expect(some.expect("some")).toEqual(5);
 	});
 
+	it("match", () => {
+		expect(
+			Some("ok").match({
+				some: (some) => some.length,
+				none: () => "error",
+			}),
+		).toEqual(2);
+
+		expect(
+			Some({
+				text: "Lorem lorem",
+				user: "@user",
+			}).match({
+				some: (some) => some.user,
+			}),
+		).toEqual("@user");
+
+		expect(
+			None().match({
+				some: (_) => "some",
+				none: () => "Something bad wrong",
+			}),
+		).toEqual("Something bad wrong");
+
+		expect(
+			None().match({
+				some: (_) => 200,
+				none: () => 404,
+			}),
+		).toEqual(404);
+	});
+
 	it("unwrap on `Some`", () => {
 		const [some1, some2, some3] = [
 			Some(5),

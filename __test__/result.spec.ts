@@ -65,6 +65,45 @@ describe("Result", () => {
 		expect(err.err()).toEqual(Some("err"));
 	});
 
+	it("match", () => {
+		expect(
+			Ok("ok").match({
+				ok: (some) => some.length,
+				err: () => "error",
+			}),
+		).toEqual(2);
+
+		expect(
+			Ok({
+				text: "Lorem lorem",
+				user: "@user",
+			}).match({
+				ok: (ok) => ok.user,
+			}),
+		).toEqual("@user");
+
+		expect(
+			Err("error").match({
+				ok: (_) => "ok",
+				err: (_) => "Something bad wrong",
+			}),
+		).toEqual("Something bad wrong");
+
+		expect(
+			Err({
+				code: 404,
+			}).match({
+				err: (err) => err.code,
+			}),
+		).toEqual(404);
+
+		expect(
+			Ok("nice").match({
+				err: (_) => "not nice",
+			}),
+		).toBeNull();
+	});
+
 	it("unwrap", () => {
 		expect(Ok(5).unwrap()).toEqual(5);
 		expect(Ok([1, 3, 4]).unwrap()).toEqual([1, 3, 4]);

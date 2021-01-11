@@ -7,6 +7,7 @@
   - `unsafe_insert`
   - `okOr`
   - `okOrElse`
+  - `match`
   - override `toString`
 
 ### `Result`
@@ -14,9 +15,10 @@
 - add new features:
 
   - static `makeDefault`
-  - override `toString`
   - `expect`
   - `expectErr`
+  - `match`
+  - override `toString`
 
 - update docs
 

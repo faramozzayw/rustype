@@ -6,6 +6,11 @@ import { Some, None } from "./values";
 import { Ok, Err, Result } from "../Result";
 import { unwrapFailed } from "../utils";
 
+interface OptionMatch<T, ReturnSome, ReturnNone> {
+	some?: (some: T) => ReturnSome;
+	none?: () => ReturnNone;
+}
+
 /**
  * Type `Option` represents an optional value: every `Option` is either `Some` and contains a value, or `None`, and does not.
  * `Option` types are very common in Rust code, as they have a number of uses:
@@ -36,6 +41,39 @@ export class Option<T> {
 	 */
 	public static makeDefault() {
 		return None();
+	}
+
+	/**
+	 * Pattern match to retrieve the value
+	 *
+	 * @template Some - return type of the `Some` branch
+	 * @template None - return type of the `None` branch
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(Some("ok").match({
+	 * 		some: some => some.length,
+	 * 		none: () => "error",
+	 * })).toEqual(2);
+	 *
+	 * expect(None().match({
+	 * 		some: _ => "some",
+	 * 		none: () => "Something bad wrong",
+	 * })).toEqual("Something bad wrong")
+	 *
+	 * expect(None().match({
+	 * 		some: _ => 200,
+	 * 		none: () => 404,
+	 * })).toEqual(404)
+	 * ```
+	 */
+	public match<Some, None>({
+		some,
+		none,
+	}: OptionMatch<T, Some, None>): Some | None | null {
+		if (this.isNone()) return none ? none() : null;
+
+		return some ? some(this.clone()) : null;
 	}
 
 	/** Returns `true` if the option is a `Some` value. */

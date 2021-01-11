@@ -4,6 +4,11 @@ import { ResultVariants } from "../types";
 import { None, Some, Option } from "../Option";
 import { unwrapFailed } from "../utils";
 
+interface ResultMatch<T, E, Ok, Err> {
+	ok?: (ok: T) => Ok;
+	err?: (err: E) => Err;
+}
+
 /**
  * Error handling with the Result type.
  *
@@ -47,6 +52,37 @@ export class Result<T, E> {
 		if (this.isErr()) return clone(this.error);
 
 		throw Error("called `Result::cloneErr()` on a `Ok` value");
+	}
+
+	/**
+	 * Pattern match to retrieve the value
+	 *
+	 * @template Ok - return type of the `Ok` branch
+	 * @template Err - return type of the `Err` branch
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(Ok("ok").match({
+	 * 		ok: some => some.length,
+	 * 		err: () => "error",
+	 * })).toEqual(2);
+	 *
+	 * expect(Err("error").match({
+	 * 		ok: _ => "ok",
+	 * 		err: _ => "Something bad wrong",
+	 * })).toEqual("Something bad wrong")
+	 *
+	 * expect(Err({ code: 404 }).match({  err: err => err.code })).toEqual(404);
+	 * expect(Ok("nice").match({  err: _ => "not nice" })).toBeNull();
+	 * ```
+	 */
+	public match<Ok, Err>({
+		ok,
+		err,
+	}: ResultMatch<T, E, Ok, Err>): Ok | Err | null {
+		if (this.isErr()) return err ? err(this.cloneErr()) : null;
+
+		return ok ? ok(this.cloneOk()) : null;
 	}
 
 	/** Returns `true` if the result is `Ok`. */
