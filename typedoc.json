@@ -4,5 +4,6 @@
 	"includeVersion": true,
 	"readme": "./README.md",
 	"listInvalidSymbolLinks": true,
-	"categorizeByGroup": true
+	"categorizeByGroup": true,
+	"defaultCategory": "Option"
 }
