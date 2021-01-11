@@ -4,8 +4,26 @@ import { OptionType } from "../types";
 import { Some, None } from "./values";
 
 import { Ok, Err, Result } from "../Result";
-import { Options } from "prettier";
+import { unwrapFailed } from "../utils";
 
+interface OptionMatch<T, ReturnSome, ReturnNone> {
+	some?: (some: T) => ReturnSome;
+	none?: () => ReturnNone;
+}
+
+/**
+ * Type `Option` represents an optional value: every `Option` is either `Some` and contains a value, or `None`, and does not.
+ * `Option` types are very common in Rust code, as they have a number of uses:
+ *
+ * - Initial values
+ * - Return value for otherwise reporting simple errors, where `None` is returned on error
+ * - Optional struct fields
+ * - Optional function arguments
+ * - Nullable values
+ * - Swapping things out of difficult situations
+ *
+ * @category Option
+ */
 export class Option<T> {
 	/** @ignore */
 	private data: OptionType<T>;
@@ -20,9 +38,44 @@ export class Option<T> {
 		return clone(this.data);
 	}
 
-	/** @ignore */
-	private unwrapFailed(msg: string, error: T): never {
-		throw new Error(`${msg}: ${JSON.stringify(error)}`);
+	/**
+	 * Returns the "default value" for a Option<T> => `None`.
+	 */
+	public static makeDefault() {
+		return None();
+	}
+
+	/**
+	 * Pattern match to retrieve the value
+	 *
+	 * @template Some - return type of the `Some` branch
+	 * @template None - return type of the `None` branch
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(Some("ok").match({
+	 * 		some: some => some.length,
+	 * 		none: () => "error",
+	 * })).toEqual(2);
+	 *
+	 * expect(None().match({
+	 * 		some: _ => "some",
+	 * 		none: () => "Something bad wrong",
+	 * })).toEqual("Something bad wrong")
+	 *
+	 * expect(None().match({
+	 * 		some: _ => 200,
+	 * 		none: () => 404,
+	 * })).toEqual(404)
+	 * ```
+	 */
+	public match<Some, None>({
+		some,
+		none,
+	}: OptionMatch<T, Some, None>): Some | None | null {
+		if (this.isNone()) return none ? none() : null;
+
+		return some ? some(this.clone()) : null;
 	}
 
 	/** Returns `true` if the option is a `Some` value. */
@@ -48,6 +101,25 @@ export class Option<T> {
 		}
 
 		return this.clone();
+	}
+
+	/**
+	 * Inserts value into the option
+	 *
+	 * If the option already contains a value, the old value is dropped.
+	 *
+	 * @unsafe
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(None().unsafe_insert(5)).toEqual(Some(5));
+	 * expect(Some(0).unsafe_insert(65)).toEqual(Some(65));
+	 * ```
+	 */
+	public unsafe_insert(val: T): Option<T> {
+		this.data = val;
+
+		return this;
 	}
 
 	/**
@@ -161,6 +233,45 @@ export class Option<T> {
 		if (this.isNone()) return defaultFn();
 
 		return fn(this.clone());
+	}
+
+	/**
+	 * Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to `Ok(v)` and `None` to `Err(err)`.
+	 *
+	 * Arguments passed to `okOr` are eagerly evaluated; if you are passing the result of a function
+	 * call, it is recommended to use `okOrElse`, which is lazily evaluated.
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(Some(5).okOr("Failed")).toEqual(Ok(5));
+	 * expect(None().okOr("Failed")).toEqual(Err("Failed"));
+	 * ```
+	 */
+	public okOr<E>(err: E): Result<T, E> {
+		if (this.isSome()) {
+			return Ok(this.clone());
+		}
+
+		return Err(err);
+	}
+
+	/**
+	 * Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to `Ok(v)` and `None` to `Err(err())`.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const failFn = () => "Failed";
+	 *
+	 * expect(Some(5).okOrElse(failFn)).toEqual(Ok(5));
+	 * expect(None().okOrElse(failFn)).toEqual(Err("Failed"));
+	 * ```
+	 */
+	public okOrElse<E, F extends () => E>(fn: F) {
+		if (this.isNone()) {
+			return Err(fn());
+		}
+
+		return Ok(this.clone());
 	}
 
 	/**
@@ -283,7 +394,7 @@ export class Option<T> {
 			const innerError = this.data.unwrap();
 			return Err<E>(innerError);
 		} else {
-			this.unwrapFailed(
+			unwrapFailed(
 				"called `Option::transpose()` on an `Some` value where `self` is not an `Result`",
 				this.data,
 			);
@@ -313,6 +424,28 @@ export class Option<T> {
 		}
 
 		return Some(this.data);
+	}
+
+	/**
+	 * Returns a string representation of an object.
+	 *
+	 * @override
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(None().toString()).toEqual("None");
+	 *
+	 * expect(Some(5).toString()).toEqual("Some(5)");
+	 * expect(Some(Some(5)).toString()).toEqual("Some(Some(5))");
+	 *
+	 * // BUT
+	 * expect(Some({ code: 15 }).toString()).toEqual("Some([object Object])");
+	 * ```
+	 */
+	public toString() {
+		if (this.isNone()) return "None";
+
+		return `Some(${this.data.toString()})`;
 	}
 
 	/** Returns `None` if the option is `None`, otherwise returns `optb`. */

@@ -2,7 +2,22 @@ import clone from "clone-deep";
 
 import { ResultVariants } from "../types";
 import { None, Some, Option } from "../Option";
+import { unwrapFailed } from "../utils";
 
+interface ResultMatch<T, E, Ok, Err> {
+	ok?: (ok: T) => Ok;
+	err?: (err: E) => Err;
+}
+
+/**
+ * Error handling with the Result type.
+ *
+ * `Result<T, E>` is the type used for returning and propagating errors.
+ * `Ok(T)`, representing success and containing a value, and `Err(E)`,
+ * representing error and containing an error value.
+ *
+ * @category Result
+ */
 export class Result<T, E> {
 	/** @ignore */
 	private type: ResultVariants;
@@ -19,10 +34,6 @@ export class Result<T, E> {
 		} else {
 			this.error = content as E;
 		}
-	}
-	/** @ignore */
-	private unwrapFailed(msg: string, error: E | T): never {
-		throw new Error(`${msg}: ${JSON.stringify(error)}`);
 	}
 
 	/**
@@ -45,6 +56,37 @@ export class Result<T, E> {
 		throw Error("called `Result::cloneErr()` on a `Ok` value");
 	}
 
+	/**
+	 * Pattern match to retrieve the value
+	 *
+	 * @template Ok - return type of the `Ok` branch
+	 * @template Err - return type of the `Err` branch
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(Ok("ok").match({
+	 * 		ok: some => some.length,
+	 * 		err: () => "error",
+	 * })).toEqual(2);
+	 *
+	 * expect(Err("error").match({
+	 * 		ok: _ => "ok",
+	 * 		err: _ => "Something bad wrong",
+	 * })).toEqual("Something bad wrong")
+	 *
+	 * expect(Err({ code: 404 }).match({  err: err => err.code })).toEqual(404);
+	 * expect(Ok("nice").match({  err: _ => "not nice" })).toBeNull();
+	 * ```
+	 */
+	public match<Ok, Err>({
+		ok,
+		err,
+	}: ResultMatch<T, E, Ok, Err>): Ok | Err | null {
+		if (this.isErr()) return err ? err(this.cloneErr()) : null;
+
+		return ok ? ok(this.cloneOk()) : null;
+	}
+
 	/** Returns `true` if the result is `Ok`. */
 	public isOk(): boolean {
 		return this.type === "ok";
@@ -53,6 +95,42 @@ export class Result<T, E> {
 	/** Returns `true` if the result is `Err`. */
 	public isErr(): boolean {
 		return this.type === "err";
+	}
+
+	/**
+	 *
+	 * Returns the contained `Ok` value, consuming the `self` value.
+	 *
+	 * ### Panics
+	 * Panics if the value is an `Err`, with a panic message including the passed message, and the content of the `Err`.
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(Ok("ok").expect("Testing expect")).toEqual("ok");
+	 *
+	 * try {
+	 * 	Err("fail result").expect("Testing expect")
+	 * } catch (e: unknown) {
+	 * 	expect((e as Error).message).toEqual("Testing expect");
+	 * }
+	 * ```
+	 */
+	public expect(msg: string): T | never {
+		if (this.isErr()) unwrapFailed(msg, this.cloneErr());
+
+		return this.cloneOk();
+	}
+
+	/**
+	 * Returns the contained Err value, consuming the self value.
+	 *
+	 * ### Panics
+	 * Panics if the value is an Ok, with a panic message including the passed message, and the content of the Ok.
+	 */
+	public expectErr(msg: string): E | never {
+		if (this.isOk()) unwrapFailed(msg, this.cloneOk());
+
+		return this.cloneErr();
 	}
 
 	/**
@@ -118,10 +196,7 @@ export class Result<T, E> {
 	 */
 	public unwrap(): T | never {
 		if (this.isErr()) {
-			this.unwrapFailed(
-				"called `Result::unwrap()` on a `Error` value",
-				this.error,
-			);
+			unwrapFailed("called `Result::unwrap()` on a `Error` value", this.error);
 		}
 
 		return this.data;
@@ -150,10 +225,7 @@ export class Result<T, E> {
 	 */
 	public unwrapErr(): E | never {
 		if (this.isOk())
-			this.unwrapFailed(
-				"called `Result::unwrap_err()` on an `Ok` value",
-				this.data,
-			);
+			unwrapFailed("called `Result::unwrap_err()` on an `Ok` value", this.data);
 
 		return this.error;
 	}
@@ -347,7 +419,7 @@ export class Result<T, E> {
 
 			return None();
 		} else {
-			this.unwrapFailed(
+			unwrapFailed(
 				"called `Result::transpose()` on an `Ok` value where `self` is not an `Option`",
 				this.data,
 			);
@@ -374,6 +446,29 @@ export class Result<T, E> {
 		}
 
 		return new Ok(this.cloneOk());
+	}
+
+	/**
+	 * Returns a string representation of an object.
+	 *
+	 * @override
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(Err(5).toString()).toEqual(`Err(5)`);
+	 * expect(Err(Err("Error")).toString()).toEqual(`Err(Err(Error))`);
+	 *
+	 * expect(Ok(5).toString()).toEqual("Ok(5)");
+	 * expect(Ok(Ok(5)).toString()).toEqual("Ok(Ok(5))");
+	 *
+	 * // BUT
+	 * expect(Err({ code: 15 }).toString()).toEqual("Err([object Object])");
+	 * ```
+	 */
+	public toString() {
+		return this.isOk()
+			? `Ok(${this.data.toString()})`
+			: `Err(${this.error.toString()})`;
 	}
 }
 
