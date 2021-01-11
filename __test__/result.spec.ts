@@ -1,6 +1,16 @@
 import { Err, Ok, Result, Some, None, Option } from "./../src";
 
 describe("Result", () => {
+	it("toString", () => {
+		expect(Err(5).toString()).toEqual(`Err(5)`);
+		expect(Err(Err("Error")).toString()).toEqual(`Err(Err(Error))`);
+
+		expect(Ok(5).toString()).toEqual("Ok(5)");
+		expect(Ok(Ok(5)).toString()).toEqual("Ok(Ok(5))");
+
+		expect(Err({ code: 15 }).toString()).toEqual("Err([object Object])");
+	});
+
 	it("isOk", () => {
 		const ok = Ok("ok");
 		expect(ok.isOk()).toBeTruthy();
@@ -17,6 +27,28 @@ describe("Result", () => {
 		expect(ok.isErr()).toBeFalsy();
 	});
 
+	it("expect", () => {
+		expect(Ok("ok").expect("Testing expect")).toEqual("ok");
+
+		try {
+			Err("fail result").expect("Testing expect");
+		} catch (e: unknown) {
+			expect((e as Error).message).toMatch(/Testing expect/gi);
+		}
+	});
+
+	it("expectErr", () => {
+		expect(Err("fail result").expectErr("Testing expect")).toEqual(
+			"fail result",
+		);
+
+		try {
+			Ok("ok result").expectErr("Testing expect");
+		} catch (e: unknown) {
+			expect((e as Error).message).toMatch(/Testing expect/gi);
+		}
+	});
+
 	it("ok", () => {
 		const ok = Ok("ok");
 		expect(ok.ok()).toEqual(Some("ok"));
@@ -31,6 +63,45 @@ describe("Result", () => {
 
 		const err = Err("err");
 		expect(err.err()).toEqual(Some("err"));
+	});
+
+	it("match", () => {
+		expect(
+			Ok("ok").match({
+				ok: (some) => some.length,
+				err: () => "error",
+			}),
+		).toEqual(2);
+
+		expect(
+			Ok({
+				text: "Lorem lorem",
+				user: "@user",
+			}).match({
+				ok: (ok) => ok.user,
+			}),
+		).toEqual("@user");
+
+		expect(
+			Err("error").match({
+				ok: (_) => "ok",
+				err: (_) => "Something bad wrong",
+			}),
+		).toEqual("Something bad wrong");
+
+		expect(
+			Err({
+				code: 404,
+			}).match({
+				err: (err) => err.code,
+			}),
+		).toEqual(404);
+
+		expect(
+			Ok("nice").match({
+				err: (_) => "not nice",
+			}),
+		).toBeNull();
 	});
 
 	it("unwrap", () => {
