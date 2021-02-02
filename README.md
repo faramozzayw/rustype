@@ -1,6 +1,6 @@
 # Rustype 🦀
 
-Type safe Option and Result from the Rust programming language.
+Type safe Option, Result and Vector from the Rust programming language.
 
 ![Minified](https://badgen.net/bundlephobia/min/@faramo.zayw/rustype)
 ![Version](https://badgen.net/npm/v/@faramo.zayw/rustype)
@@ -68,6 +68,18 @@ const safeAdd = (a: number, b: number): Result<number, string> => {
 console.log(safeAdd(6, 7)); // Ok(13)
 console.log(safeAdd(Infinity, 7)); // Err("Some of the arguments are not safe integers.")
 console.log(safeAdd(Number.MAX_SAFE_INTEGER - 1, 7)); // Err("The sum result is not a safe integer.");
+```
+
+### `Vector<T>`
+
+```ts
+import { Vector } from "@faramo.zayw/rustype";
+
+const vec = new Vec(1, 2, 3, 4, 5, 6, 7, 8, 12)
+	.repeat(3)
+	.map(item => item % 2 * Math.random())
+	.rotateLeft(5)
+	.partition((item) => item % 2 === 0)
 ```
 
 ### API Docs
