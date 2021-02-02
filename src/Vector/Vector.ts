@@ -1,8 +1,23 @@
-import { Options } from "prettier";
 import { None, Option, Some } from "../Option";
 import { Panic } from "../panic";
 import { range } from "../utils";
 
+type Enumerate<T> = [index: number, value: T];
+
+/**
+ * @class Vector
+ *
+ * `Vector` combines methods from `Iterator` and `Vector`.
+ * Also there are all methods from JS array.
+ *
+ * @template T - type of `Vector` elements
+ *
+ * @see Iterator https://doc.rust-lang.org/std/iter/trait.Iterator.html
+ * @see Vector https://doc.rust-lang.org/std/vec/struct.Vec.html
+ * @see Array https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array
+ *
+ * @category Vector
+ */
 export class Vector<T> extends Array<T> {
 	static get [Symbol.species]() {
 		return Array;
@@ -10,6 +25,10 @@ export class Vector<T> extends Array<T> {
 
 	public static default() {
 		return new Vector();
+	}
+
+	get length(): number {
+		return this.length;
 	}
 
 	public static fromArray<AT>(array: AT[]): Vector<AT> {
@@ -119,7 +138,7 @@ export class Vector<T> extends Array<T> {
 		if (this.checkIndex(a) && this.checkIndex(b)) {
 			[this[a], this[b]] = [this[b], this[a]];
 		} else {
-			throw new Panic("`a` or `b` are out of bounds.");
+			throw new RangeError("`a` or `b` are out of bounds.");
 		}
 
 		return this;
@@ -188,5 +207,139 @@ export class Vector<T> extends Array<T> {
 	 */
 	public clear(): void {
 		while (this.pop()) {}
+	}
+
+	/**
+	 * Rotates the vector in-place such that the first `mid` elements of the slice move to the end while the last `this.lenght - mid` elements move to the front. 
+	 * 
+	 * After calling `rotateLeft`, the element previously at index `mid` will become the first element in the slice.
+	 * 
+	 * @throws `RangeError`, if `mid` is an unsafe integer or less than 0
+	 * 
+	 * ### Example
+	 * ```ts
+	 * const v1 = new Vector("a", "b", "c", "d", "e", "f");
+	 * v1.rotateLeft(2);
+	 * expect(v1).toEqual(new Vector("c", "d", "e", "f", "a", "b"));
+	 * 
+	 * // if mid > length
+	 * const v2 = new Vector(1, 2, 3);
+	 * v2.rotateLeft(3);
+	 * expect(v2).toEqual(new Vector(1, 2, 3));
+	 * 
+	 * // if mid == 0
+	 * const v3 = new Vector(1, 2, 3);
+	 * v3.rotateLeft(0);
+	 * expect(v3).toEqual(new Vector(1, 2, 3));
+
+	 * const v4 = new Vector(1, 2, 3);
+	 * v4.rotateLeft(1);
+	 * expect(v4).toEqual(new Vector(2, 3, 1));
+	 * ```
+	 */
+	public rotateLeft(mid: number): Vector<T> | never {
+		if (!Number.isSafeInteger(mid) || mid < 0 || mid > this.length) {
+			throw new RangeError(`"mid" out of range`);
+		}
+
+		const k = this.length - mid;
+
+		for (let i = 0; i < k; i++) {
+			this.swap(i, mid + i);
+		}
+
+		return this;
+	}
+
+	/**
+	 * Rotates the vector in-place such that the first `this.length - k` elements of the slice move to the end while the last `k` elements move to the front.
+	 *
+	 * After calling `rotateRight`, the element previously at index `this.length - k `will become the first element in the slice.
+	 *
+	 * @throws `RangeError`, if `k` is an unsafe integer or less than 0
+	 *
+	 * ### Example
+	 * ```ts
+	 * const v1 = new Vector("a", "b", "c", "d", "e", "f");
+	 * v1.rotateRight(2);
+	 * expect(v1).toEqual(new Vector("e", "f", "a", "b", "c", "d"));
+	 *
+	 * // if k > length
+	 * const v2 = new Vector(1, 2, 3);
+	 * v2.rotateRight(3);
+	 * expect(v2).toEqual(new Vector(1, 2, 3));
+	 *
+	 * // if k == 0
+	 * const v3 = new Vector(1, 2, 3);
+	 * v3.rotateRight(0);
+	 * expect(v3).toEqual(new Vector(1, 2, 3));
+	 *
+	 * const v4 = new Vector(1, 2, 3);
+	 * v4.rotateRight(1);
+	 * expect(v4).toEqual(new Vector(3, 1, 2));
+	 *
+	 * const v5 = new Vector(1, 2, 3);
+	 * v5.rotateRight(2);
+	 * expect(v5).toEqual(new Vector(2, 3, 1));
+	 * ```
+	 */
+	public rotateRight(k: number): Vector<T> | never {
+		if (!Number.isSafeInteger(k) || k < 0 || k > this.length) {
+			throw new RangeError(`"mid" out of range`);
+		}
+
+		const t = this.length - k;
+
+		for (let i = 0; i < k; i++) {
+			this.swap(i, t + i);
+		}
+
+		for (let i = k; i < t; i++) {
+			this.swap(i, i + k);
+		}
+
+		return this;
+	}
+
+	/** @experimental */
+	public *enumerate(): Generator<Enumerate<T>, unknown, unknown> {
+		let arr: Enumerate<T>[] = [];
+
+		let index = 0;
+		for (const item of this) {
+			yield [index, item];
+		}
+
+		return arr;
+	}
+
+	/**
+	 * The predicate passed to `partition()` can return `true`, or `false`.
+	 * `partition()` returns a pair, all of the elements for which it returned `true`,
+	 * and all of the elements for which it returned `false`.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const vec = new Vector(1, 2, 3, 4, 5, 6, 7, 8);
+	 *
+	 * const [a, b] = vec.partition((item) => item % 2 === 0);
+	 * expect(a).toEqual(new Vector(2, 4, 6, 8));
+	 * expect(b).toEqual(new Vector(1, 3, 5, 7));
+	 * ```
+	 */
+	public partition<F extends (item: T) => boolean>(
+		predicate: F,
+	): [Vector<T>, Vector<T>] {
+		let [a, b] = [new Vector<T>(), new Vector<T>()];
+
+		for (const item of this) {
+			if (predicate(item)) {
+				a.push(item);
+			} else {
+				b.push(item);
+			}
+		}
+
+		return [a, b];
 	}
 }
