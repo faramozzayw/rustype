@@ -1,6 +1,18 @@
 import { None, Some, Option, Ok, Err, Result } from "./../src";
 
 describe("Option", () => {
+	it("toString", () => {
+		expect(None().toString()).toEqual("None");
+
+		expect(Some(5).toString()).toEqual("Some(5)");
+		expect(Some(Some(5)).toString()).toEqual("Some(Some(5))");
+
+		expect(Some({ code: 15 }).toString()).toEqual("Some([object Object])");
+
+		expect(`${None()}`).toEqual("None");
+		expect(`${Some(5)}`).toEqual("Some(5)");
+	});
+
 	it("is_some", () => {
 		const some = Some(5);
 		expect(some.isSome()).toBeTruthy();
@@ -23,6 +35,38 @@ describe("Option", () => {
 
 		const some = Some(5);
 		expect(some.expect("some")).toEqual(5);
+	});
+
+	it("match", () => {
+		expect(
+			Some("ok").match({
+				some: (some) => some.length,
+				none: () => "error",
+			}),
+		).toEqual(2);
+
+		expect(
+			Some({
+				text: "Lorem lorem",
+				user: "@user",
+			}).match({
+				some: (some) => some.user,
+			}),
+		).toEqual("@user");
+
+		expect(
+			None().match({
+				some: (_) => "some",
+				none: () => "Something bad wrong",
+			}),
+		).toEqual("Something bad wrong");
+
+		expect(
+			None().match({
+				some: (_) => 200,
+				none: () => 404,
+			}),
+		).toEqual(404);
 	});
 
 	it("unwrap on `Some`", () => {
@@ -77,6 +121,11 @@ describe("Option", () => {
 		expect(none.unwrapOrElse(() => "NONE")).toEqual("NONE");
 	});
 
+	it("unsafe_insert", () => {
+		expect(None().unsafe_insert(5)).toEqual(Some(5));
+		expect(Some(0).unsafe_insert(65)).toEqual(Some(65));
+	});
+
 	it("`map` on `Some`", () => {
 		const some = Some({ isSome: true });
 
@@ -117,6 +166,18 @@ describe("Option", () => {
 			(data) => data.status,
 		);
 		expect(mappedNone).toEqual(500);
+	});
+
+	it("okOr", () => {
+		expect(Some(5).okOr("Failed")).toEqual(Ok(5));
+		expect(None().okOr("Failed")).toEqual(Err("Failed"));
+	});
+
+	it("okOrElse", () => {
+		const failFn = () => "Failed";
+
+		expect(Some(5).okOrElse(failFn)).toEqual(Ok(5));
+		expect(None().okOrElse(failFn)).toEqual(Err("Failed"));
 	});
 
 	it("andThen", () => {
