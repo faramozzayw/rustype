@@ -2,9 +2,7 @@
 
 Added a new type - `Vector`. `Vector` combines methods from [`Iterator`](https://doc.rust-lang.org/std/iter/trait.Iterator.html) and [`Vector`](https://doc.rust-lang.org/std/vec/struct.Vec.html). Also there are all methods from JS array.
 
-### `Option`
-
-- add new methods:
+- methods:
   - static `default`
   - static `fromArray`
   - readonly length
