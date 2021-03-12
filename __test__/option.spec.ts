@@ -17,6 +17,8 @@ describe("Option", () => {
 		const some = Some(5);
 		expect(some.isSome()).toBeTruthy();
 
+		expect(Some(false).isSome()).toBeTruthy();
+
 		const none = None();
 		expect(none.isSome()).toBeFalsy();
 	});

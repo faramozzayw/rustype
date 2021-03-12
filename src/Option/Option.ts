@@ -80,7 +80,11 @@ export class Option<T> {
 
 	/** Returns `true` if the option is a `Some` value. */
 	public isSome(): boolean {
-		return Boolean(this.data);
+		if (typeof this.data === "undefined" || this.data === null) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/** Returns `true` if the option is a `None` value. */
