@@ -1,3 +1,9 @@
+## 0.3.1 (March 12, 2021)
+
+Fix:
+
+- Unexpected behavior when data is `false`
+
 ## 0.3.0 (February 2, 2021)
 
 Added a new type - `Vector`. `Vector` combines methods from [`Iterator`](https://doc.rust-lang.org/std/iter/trait.Iterator.html) and [`Vector`](https://doc.rust-lang.org/std/vec/struct.Vec.html). Also there are all methods from JS array.
