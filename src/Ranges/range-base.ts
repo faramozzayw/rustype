@@ -99,4 +99,10 @@ export class RangeBase {
 	isEmpty(): boolean {
 		return !(this.#start < this.#end);
 	}
+
+	extractSlice<T, SR>(
+		source: T & { slice: (start?: number, end?: number) => SR },
+	): SR {
+		return source.slice(...this.getBounds());
+	}
 }
