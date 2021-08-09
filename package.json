@@ -1,6 +1,6 @@
 {
 	"name": "@faramo.zayw/rustype",
-	"version": "0.3.1",
+	"version": "0.4.0",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
 	"description": "Type safe Option and Result from the Rust programming language.",
