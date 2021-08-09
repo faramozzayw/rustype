@@ -4,7 +4,7 @@ import { OptionType } from "../types";
 import { Some, None } from "./values";
 
 import { Ok, Err, Result } from "../Result";
-import { unwrapFailed } from "../utils";
+import { unwrapFailed } from "../utils/unwrap-failed";
 
 interface OptionMatch<T, ReturnSome, ReturnNone> {
 	some?: (some: T) => ReturnSome;

@@ -1,8 +1,8 @@
 import clone from "clone-deep";
 
+import { unwrapFailed } from "../utils";
 import { ResultVariants } from "../types";
 import { None, Some, Option } from "../Option";
-import { unwrapFailed } from "../utils";
 
 interface ResultMatch<T, E, Ok, Err> {
 	ok?: (ok: T) => Ok;
