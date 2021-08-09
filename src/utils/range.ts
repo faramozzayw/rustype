@@ -5,7 +5,3 @@ export function* range(from = 0, to = 0, inclusive = false) {
 		yield i;
 	}
 }
-/** @ignore */
-export function unwrapFailed<T>(msg: string, data: T): never {
-	throw new Error(`${msg}: ${JSON.stringify(data)}`);
-}
