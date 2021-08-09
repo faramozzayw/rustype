@@ -21,6 +21,10 @@ Using yarn
 yarn add @faramo.zayw/rustype
 ```
 
+## Supporting IE11 and obsolete platforms
+
+This library uses features like destructuring assignment, `for..of` and `const/let` declarations and doesn't ship with ES5 transpiled sources. If you aim to support browsers like IE11 and below → make sure you run Babel over your `node_modules`
+
 ## Usage
 
 ### `Option<T>`
