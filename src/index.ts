@@ -1,3 +1,4 @@
+export * from "./HashSet";
 export { Vector } from "./Vector";
 export { Err, Ok, Result } from "./Result";
 export { Some, None, Option } from "./Option";
