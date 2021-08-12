@@ -94,4 +94,25 @@ export class HashSet<T> extends Set<T> implements Clone<HashSet<T>> {
 	public union(other: HashSet<T>): HashSet<T> {
 		return new HashSet<T>(this.toArray().concat(other.toArray()));
 	}
+
+	/**
+	 * Clears the set, returning all elements in an `Iterable`.
+	 */
+	public drain(): Array<T> {
+		const elements = [...this];
+
+		this.clear();
+
+		return elements;
+	}
+
+	public drainFilter<F extends (value: T, index: number) => boolean>(
+		fn: F,
+	): Array<T> {
+		return this.drain().filter(fn);
+	}
+
+	public isEmpty(): boolean {
+		return this.size === 0;
+	}
 }
