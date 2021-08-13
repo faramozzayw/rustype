@@ -3,15 +3,25 @@ import { Clone } from "../utils";
 import { Vector } from "../Vector";
 
 /**
- * @class ASet
+ * @class HashSet
  *
  * @template T
  *
+ * ### Definition ([source](https://en.wikipedia.org/wiki/Set_(abstract_data_type))):
+ * A **set** is an abstract data type that can store unique values, without any particular order. It is a computer implementation of the mathematical concept of a finite set. Unlike most other collection types, rather than retrieving a specific element from a set, one typically tests a value for membership in a set.
  *
- * @see JS Set https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
- * @see Rust HashSet https://doc.rust-lang.org/std/collections/struct.HashSet.html
  *
- * @category ASet
+ * #### Use the Set variant of any of these Maps when: ([source](https://doc.rust-lang.org/std/collections/index.html#use-the-set-variant-of-any-of-these-maps-when))
+ * - You just want to remember which keys you’ve seen.
+ * - There is no meaningful value to associate with your keys.
+ * - You just want a set.
+ *
+ * #### References
+ * @see [JS Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set)
+ * @see [Rust HashSet](https://doc.rust-lang.org/std/collections/struct.HashSet.html)
+ * @see [The Empty Set](https://www.math.drexel.edu/~tolya/emptyset.pdf)
+ *
+ * @category HashSet
  */
 export class HashSet<T> extends Set<T> implements Clone<HashSet<T>> {
 	public static get [Symbol.species]() {
