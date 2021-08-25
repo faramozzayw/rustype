@@ -174,6 +174,14 @@ export class HashSet<T> extends Set<T> implements Clone<HashSet<T>> {
 
 	/**
 	 * Clears the set, returning all elements in an `Iterable`.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const set = new HashSet([1, 2, 3, 4]);
+	 *
+	 * expect(set.drain()).toEqual([1, 2, 3, 4]);
+	 * expect(set.isEmpty()).toBeTruthy();
+	 * ```
 	 */
 	public drain(): Array<T> {
 		const elements = [...this];
@@ -183,10 +191,43 @@ export class HashSet<T> extends Set<T> implements Clone<HashSet<T>> {
 		return elements;
 	}
 
+	/**
+	 *
+	 * ### Example
+	 * ```ts
+	 * const set = new HashSet([1, 2, 3, 4]);
+	 *
+	 * expect(set.drainFilter((v) => v % 2 === 0)).toEqual([2, 4]);
+	 * expect(set.isEmpty()).toBeTruthy();
+	 * ```
+	 */
 	public drainFilter<F extends (value: T, index: number) => boolean>(
 		fn: F,
 	): Array<T> {
 		return this.drain().filter(fn);
+	}
+
+	/**
+	 * Retains only the elements specified by the predicate.
+	 *
+	 * In other words, remove all elements `e` such that `fn(e)` returns `false`.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const set = new HashSet([1, 2, 3, 4]);
+	 *
+	 * set.retain((v) => v % 2 === 0);
+	 *
+	 * expect(set.toArray()).toEqual([2, 4]);
+	 * expect(set.isEmpty()).toBeFalsy();
+	 * ```
+	 */
+	public retain<F extends (value: T) => boolean>(fn: F): void {
+		for (let element of this) {
+			if (!fn(element)) {
+				this.delete(element);
+			}
+		}
 	}
 
 	public isEmpty(): boolean {
