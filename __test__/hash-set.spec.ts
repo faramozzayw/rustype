@@ -96,4 +96,56 @@ describe("Option", () => {
 			expect(diff.toArray()).toEqual([]);
 		});
 	});
+
+	describe("drain", () => {
+		it("works correctly with empty set", () => {
+			const emptySet = new HashSet();
+
+			expect(emptySet.drain()).toEqual([]);
+			expect(emptySet.isEmpty()).toBeTruthy();
+		});
+
+		it("works correctly with a set that has values", () => {
+			const set = new HashSet([1, 2, 3, 4]);
+
+			expect(set.drain()).toEqual([1, 2, 3, 4]);
+			expect(set.isEmpty()).toBeTruthy();
+		});
+	});
+
+	describe("drainFilter", () => {
+		it("works correctly with empty set", () => {
+			const emptySet = new HashSet();
+
+			expect(emptySet.drainFilter((v) => v !== null)).toEqual([]);
+			expect(emptySet.isEmpty()).toBeTruthy();
+		});
+
+		it("works correctly with a set that has values", () => {
+			const set = new HashSet([1, 2, 3, 4]);
+
+			expect(set.drainFilter((v) => v % 2 === 0)).toEqual([2, 4]);
+			expect(set.isEmpty()).toBeTruthy();
+		});
+	});
+
+	describe("retain", () => {
+		it("works correctly with empty set", () => {
+			const emptySet = new HashSet();
+
+			emptySet.retain((v) => v !== null);
+
+			expect(emptySet.toArray()).toEqual([]);
+			expect(emptySet.isEmpty()).toBeTruthy();
+		});
+
+		it("works correctly with a set that has values", () => {
+			const set = new HashSet([1, 2, 3, 4]);
+
+			set.retain((v) => v % 2 === 0);
+
+			expect(set.toArray()).toEqual([2, 4]);
+			expect(set.isEmpty()).toBeFalsy();
+		});
+	});
 });
