@@ -2,14 +2,16 @@
 	"compilerOptions": {
 		"module": "es2020",
 		"target": "es2019",
-		"declaration": true,
 		"outDir": "./lib",
 		"strict": true,
-		"esModuleInterop": true,
+		"declaration": true,
 		"skipLibCheck": true,
+		"esModuleInterop": true,
 		"moduleResolution": "Node",
 		"downlevelIteration": true,
-		"noImplicitAny": true
+		"noImplicitAny": true,
+		"sourceMap": true,
+		"allowSyntheticDefaultImports": true
 	},
 	"include": ["src/**/*"],
 	"exclude": [
