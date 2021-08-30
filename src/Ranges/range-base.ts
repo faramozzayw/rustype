@@ -15,7 +15,7 @@ export class RangeBase {
 	 *
 	 * @throws Will throw `RangeError` if one of the bounds is NaN.
 	 */
-	constructor(start: number, end: number, inclusive: boolean = false) {
+	public constructor(start: number, end: number, inclusive: boolean = false) {
 		if (Number.isNaN(start) || Number.isNaN(end)) {
 			throw new RangeError(`"NaN" does not include in range of correct values`);
 		}
@@ -52,21 +52,21 @@ export class RangeBase {
 	/**
 	 * Returns the bounds of a Range
 	 */
-	getBounds(): [start: number, end: number] {
+	public getBounds(): [number, number] {
 		return [this.#start, this.#end];
 	}
 
 	/**
 	 * Returns `true` if the `Range` includes the end.
 	 */
-	isInclusive(): boolean {
+	public isInclusive(): boolean {
 		return this.#inclusive;
 	}
 
 	/**
 	 * Returns `true` if the `Range` is exhaustive.
 	 */
-	isExhaustive(): boolean {
+	public isExhaustive(): boolean {
 		if (Number.isFinite(this.#start) && Number.isFinite(this.#end)) {
 			return true;
 		}
@@ -81,7 +81,7 @@ export class RangeBase {
 	 *
 	 * @throws Will throw `RangeError` if one of the bounds is NaN.
 	 */
-	contains(item: number): boolean | never {
+	public contains(item: number): boolean | never {
 		if (Number.isNaN(item)) {
 			throw new RangeError(`"NaN" does not include in range of correct values`);
 		}
@@ -96,11 +96,11 @@ export class RangeBase {
 	/**
 	 * Returns `true` if the range contains no items.
 	 */
-	isEmpty(): boolean {
+	public isEmpty(): boolean {
 		return !(this.#start < this.#end);
 	}
 
-	extractSlice<T, SR>(
+	public extractSlice<T, SR>(
 		source: T & { slice: (start?: number, end?: number) => SR },
 	): SR {
 		return source.slice(...this.getBounds());

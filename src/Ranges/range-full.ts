@@ -10,15 +10,15 @@ import type { Clone } from "../utils";
  * `RangeFullExpr` is primarily used as a slicing index, its shorthand is `..`. It cannot serve as an Iterator because it doesn't have a starting point.
  */
 export class RangeFullExpr extends RangeBase implements Clone<RangeFullExpr> {
-	constructor() {
+	public constructor() {
 		super(-Infinity, Infinity);
 	}
 
-	toString() {
+	public toString() {
 		return `..`;
 	}
 
-	clone() {
+	public clone() {
 		return new RangeFullExpr();
 	}
 }

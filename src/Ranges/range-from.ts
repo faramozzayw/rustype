@@ -15,15 +15,15 @@ export class RangeFromExpr extends RangeBase implements Clone<RangeFromExpr> {
 	 *
 	 * @throws Will throw `RangeError` if one of the bounds is `NaN`.
 	 */
-	constructor(start: number) {
+	public constructor(start: number) {
 		super(start, Infinity);
 	}
 
-	toString() {
+	public toString() {
 		return `${this.start}..`;
 	}
 
-	clone() {
+	public clone() {
 		return new RangeFromExpr(this.start);
 	}
 }

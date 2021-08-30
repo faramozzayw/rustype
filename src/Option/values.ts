@@ -15,6 +15,6 @@ export function Some<T>(some: OptionType<T>) {
 /**
  * @category Option
  */
-export function None() {
-	return new Option(null);
+export function None<T>() {
+	return new Option<T>(null);
 }

@@ -5,6 +5,7 @@ import { Some, None } from "./values";
 
 import { Ok, Err, Result } from "../Result";
 import { unwrapFailed } from "../utils/unwrap-failed";
+import { Clone } from "../utils";
 
 interface OptionMatch<T, ReturnSome, ReturnNone> {
 	some?: (some: T) => ReturnSome;
@@ -24,7 +25,7 @@ interface OptionMatch<T, ReturnSome, ReturnNone> {
  *
  * @category Option
  */
-export class Option<T> {
+export class Option<T> implements Clone<Option<T>> {
 	/** @ignore */
 	private data: OptionType<T>;
 
@@ -33,9 +34,12 @@ export class Option<T> {
 		this.data = data;
 	}
 
-	/** @ignore */
-	private clone() {
-		return clone(this.data);
+	public clone() {
+		return new Option<T>(clone(this.data));
+	}
+
+	private cloneInnerValue(): T {
+		return clone<T>(this.data as T);
 	}
 
 	/**
@@ -75,7 +79,7 @@ export class Option<T> {
 	}: OptionMatch<T, Some, None>): Some | None | null {
 		if (this.isNone()) return none ? none() : null;
 
-		return some ? some(this.clone()) : null;
+		return some ? some(this.cloneInnerValue()) : null;
 	}
 
 	/** Returns `true` if the option is a `Some` value. */
@@ -104,7 +108,7 @@ export class Option<T> {
 			throw new Error(msg);
 		}
 
-		return this.clone();
+		return this.cloneInnerValue();
 	}
 
 	/**
@@ -145,7 +149,7 @@ export class Option<T> {
 			throw TypeError("called `Option::unwrap()` on a `None` value");
 		}
 
-		return this.data;
+		return this.data as T;
 	}
 
 	/**
@@ -160,7 +164,7 @@ export class Option<T> {
 	public unwrapOr(defaultVal: T): T {
 		if (this.isNone()) return defaultVal;
 
-		return this.data;
+		return this.data as T;
 	}
 
 	/**
@@ -176,7 +180,7 @@ export class Option<T> {
 			return fn();
 		}
 
-		return this.data;
+		return this.data as T;
 	}
 
 	/**
@@ -190,9 +194,9 @@ export class Option<T> {
 	 * ```
 	 */
 	public map<U, F extends (data: T) => U>(fn: F): Option<U> {
-		if (this.isNone()) return None();
+		if (this.isNone()) return None<U>();
 
-		return Some(fn(this.clone()));
+		return Some(fn(this.cloneInnerValue()));
 	}
 
 	/**
@@ -211,7 +215,7 @@ export class Option<T> {
 	public mapOr<U, F extends (data: T) => U>(defaultVal: U, fn: F): U {
 		if (this.isNone()) return defaultVal;
 
-		return fn(this.clone());
+		return fn(this.cloneInnerValue());
 	}
 
 	/**
@@ -236,7 +240,7 @@ export class Option<T> {
 	): U {
 		if (this.isNone()) return defaultFn();
 
-		return fn(this.clone());
+		return fn(this.cloneInnerValue());
 	}
 
 	/**
@@ -253,7 +257,7 @@ export class Option<T> {
 	 */
 	public okOr<E>(err: E): Result<T, E> {
 		if (this.isSome()) {
-			return Ok(this.clone());
+			return Ok(this.cloneInnerValue());
 		}
 
 		return Err(err);
@@ -275,7 +279,7 @@ export class Option<T> {
 			return Err(fn());
 		}
 
-		return Ok(this.clone());
+		return Ok(this.cloneInnerValue());
 	}
 
 	/**
@@ -298,7 +302,7 @@ export class Option<T> {
 	): Option<U> {
 		if (this.isNone()) return None();
 
-		return fn(this.clone());
+		return fn(this.cloneInnerValue());
 	}
 
 	/**
@@ -321,7 +325,7 @@ export class Option<T> {
 	public filter<P extends (data: T) => boolean>(predicate: P): Option<T> {
 		if (this.isNone()) return None();
 
-		const clone = this.clone();
+		const clone = this.cloneInnerValue();
 		if (predicate(clone)) {
 			return Some(clone);
 		}
@@ -343,7 +347,7 @@ export class Option<T> {
 	 * ```
 	 */
 	public replace(value: T): Option<T> {
-		const old = this.clone();
+		const old = this.cloneInnerValue();
 		this.data = value;
 		return Some(old);
 	}
@@ -449,7 +453,7 @@ export class Option<T> {
 	public toString() {
 		if (this.isNone()) return "None";
 
-		return `Some(${this.data.toString()})`;
+		return `Some(${((this.data as unknown) as object).toString()})`;
 	}
 
 	/** Returns `None` if the option is `None`, otherwise returns `optb`. */

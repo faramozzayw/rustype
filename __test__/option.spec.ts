@@ -147,7 +147,7 @@ describe("Option", () => {
 		const mappedSome = some.mapOr(defaultStatus, (data) => data.status);
 		expect(mappedSome).toEqual(200);
 
-		const none = None();
+		const none = None<{ status: number }>();
 		const mappedNone = none.mapOr(defaultStatus, (data) => data.status);
 		expect(mappedNone).toEqual(500);
 	});
@@ -162,7 +162,7 @@ describe("Option", () => {
 		);
 		expect(mappedSome).toEqual(200);
 
-		const none = None();
+		const none = None<{ status: number }>();
 		const mappedNone = none.mapOrElse(
 			() => defaultStatus,
 			(data) => data.status,

@@ -18,7 +18,7 @@ export class RangeInclusiveExpr
 	 *
 	 * @throws Will throw `RangeError` if one of the bounds is `NaN` or `+-Infinity`.
 	 */
-	constructor(start: number, end: number) {
+	public constructor(start: number, end: number) {
 		super(start, end, true);
 
 		if (!Number.isFinite(start) || !Number.isFinite(end)) {
@@ -28,11 +28,11 @@ export class RangeInclusiveExpr
 		}
 	}
 
-	toString() {
+	public toString() {
 		return `${this.start}..=${this.end}`;
 	}
 
-	clone() {
+	public clone() {
 		return new RangeInclusiveExpr(this.start, this.end);
 	}
 
