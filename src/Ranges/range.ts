@@ -17,7 +17,7 @@ export class RangeExpr extends RangeBase implements Clone<RangeExpr> {
 	 *
 	 * @throws Will throw `RangeError` if one of the bounds is `NaN` or `+-Infinity`.
 	 */
-	constructor(start: number, end: number) {
+	public constructor(start: number, end: number) {
 		super(start, end);
 
 		if (!Number.isFinite(start) || !Number.isFinite(end)) {
@@ -27,11 +27,11 @@ export class RangeExpr extends RangeBase implements Clone<RangeExpr> {
 		}
 	}
 
-	toString() {
+	public toString() {
 		return `${this.start}..${this.end}`;
 	}
 
-	clone() {
+	public clone() {
 		return new RangeExpr(this.start, this.end);
 	}
 

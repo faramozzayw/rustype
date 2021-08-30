@@ -1,6 +1,6 @@
 import clone from "clone-deep";
 
-import { unwrapFailed } from "../utils";
+import { Clone, unwrapFailed } from "../utils";
 import { ResultVariants } from "../types";
 import { None, Some, Option } from "../Option";
 
@@ -18,7 +18,7 @@ interface ResultMatch<T, E, Ok, Err> {
  *
  * @category Result
  */
-export class Result<T, E> {
+export class Result<T, E> implements Clone<Result<T, E>> {
 	/** @ignore */
 	private type: ResultVariants;
 	/** @ignore */
@@ -41,7 +41,7 @@ export class Result<T, E> {
 	 * @ignore
 	 */
 	private cloneOk(): T {
-		if (this.isOk()) return clone(this.data);
+		if (this.isOk()) return clone(this.data as T);
 
 		throw Error("called `Result::cloneOk()` on a `Error` value");
 	}
@@ -51,9 +51,14 @@ export class Result<T, E> {
 	 * @ignore
 	 */
 	private cloneErr(): E {
-		if (this.isErr()) return clone(this.error);
+		if (this.isErr()) return clone(this.error as E);
 
 		throw Error("called `Result::cloneErr()` on a `Ok` value");
+	}
+
+	public clone(): Result<T, E> {
+		const data = (this.isOk() ? this.data : this.err) as T | E;
+		return new Result<T, E>(this.type, data);
 	}
 
 	/**
@@ -199,7 +204,7 @@ export class Result<T, E> {
 			unwrapFailed("called `Result::unwrap()` on a `Error` value", this.error);
 		}
 
-		return this.data;
+		return this.data as T;
 	}
 
 	/**
@@ -227,7 +232,7 @@ export class Result<T, E> {
 		if (this.isOk())
 			unwrapFailed("called `Result::unwrap_err()` on an `Ok` value", this.data);
 
-		return this.error;
+		return this.error as E;
 	}
 
 	/**
@@ -253,7 +258,7 @@ export class Result<T, E> {
 	public unwrapOr(defaultVal: T): T {
 		if (this.isErr()) return defaultVal;
 
-		return this.data;
+		return this.data as T;
 	}
 
 	/**
@@ -270,7 +275,7 @@ export class Result<T, E> {
 			return fn();
 		}
 
-		return this.data;
+		return this.data as T;
 	}
 
 	/**
@@ -288,9 +293,9 @@ export class Result<T, E> {
 	 * ```
 	 */
 	public map<U, F extends (data: T) => U>(fn: F): Result<U, E> {
-		if (this.isErr()) return new Err(this.error);
+		if (this.isErr()) return new Err(this.error as E);
 
-		return new Ok(fn(this.data));
+		return new Ok(fn(this.data as T));
 	}
 
 	/**
@@ -312,7 +317,7 @@ export class Result<T, E> {
 	public mapOr<U, F extends (data: T) => U>(defaultValue: U, fn: F): U {
 		if (this.isErr()) return defaultValue;
 
-		return fn(this.data);
+		return fn(this.data as T);
 	}
 
 	/**
@@ -341,9 +346,9 @@ export class Result<T, E> {
 	 * ```
 	 */
 	public mapOrElse<U>(defaultFn: (err: E) => U, fn: (data: T) => U): U {
-		if (this.isErr()) return defaultFn(this.error);
+		if (this.isErr()) return defaultFn(this.error as E);
 
-		return fn(this.data);
+		return fn(this.data as T);
 	}
 
 	/**
@@ -364,9 +369,9 @@ export class Result<T, E> {
 	 * ```
 	 */
 	public mapErr<F>(fn: (err: E) => F): Result<T, F> {
-		if (this.isOk()) return new Ok(this.data);
+		if (this.isOk()) return new Ok(this.data as T);
 
-		return new Err(fn(this.error));
+		return new Err(fn(this.error as E));
 	}
 
 	/**
@@ -467,8 +472,8 @@ export class Result<T, E> {
 	 */
 	public toString() {
 		return this.isOk()
-			? `Ok(${this.data.toString()})`
-			: `Err(${this.error.toString()})`;
+			? `Ok(${((this.data as unknown) as object).toString()})`
+			: `Err(${((this.error as unknown) as object).toString()})`;
 	}
 }
 

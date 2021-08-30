@@ -2,7 +2,7 @@ import { Panic } from "../panic";
 import { range } from "../utils";
 import { None, Option, Some } from "../Option";
 
-type Enumerate<T> = [index: number, value: T];
+export type Enumerate<T> = [number, T];
 
 /**
  * @class Vector

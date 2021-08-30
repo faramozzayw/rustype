@@ -17,15 +17,15 @@ export class RangeToInclusiveExpr
 	 *
 	 * @throws Will throw `RangeError` if one of the bounds is `NaN`.
 	 */
-	constructor(end: number) {
+	public constructor(end: number) {
 		super(-Infinity, end, true);
 	}
 
-	toString() {
+	public toString() {
 		return `..=${this.end}`;
 	}
 
-	clone() {
+	public clone() {
 		return new RangeToInclusiveExpr(this.end);
 	}
 }
