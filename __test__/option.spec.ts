@@ -53,6 +53,7 @@ describe("Option", () => {
 				user: "@user",
 			}).match({
 				some: (some) => some.user,
+				none: () => "Error",
 			}),
 		).toEqual("@user");
 
