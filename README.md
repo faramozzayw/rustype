@@ -1,6 +1,6 @@
 # Rustype 🦀
 
-Type safe Option, Result and Vector from the Rust programming language.
+Type-safe variant, result and vector straight (well, almost) from Rust language.  Helps to cope with situations where, for example, a value may be missing - we have a stylish API, no more boring code like `if stuff == null {...} else {...}` 
 
 ![Minified](https://badgen.net/bundlephobia/min/@faramo.zayw/rustype)
 ![Version](https://badgen.net/npm/v/@faramo.zayw/rustype)
