@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./icon.svg" align="center" width="250px" height="250px" />
+</p>
+
 # Rustype 🦀
 
 Type-safe variant, result and vector straight (well, almost) from Rust language.  Helps to cope with situations where, for example, a value may be missing - we have a stylish API, no more boring code like `if stuff == null {...} else {...}` 
