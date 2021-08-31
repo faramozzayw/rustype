@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./icon.svg" align="center" width="250px" height="250px" />
+  <img src="./icon.svg" align="right" width="225px" height="225px" />
 </p>
 
 # Rustype 🦀
