@@ -24,11 +24,13 @@
 	},
 	"homepage": "https://rustype.vercel.app",
 	"scripts": {
-		"build": "rm -rf ./lib && tsc",
+		"build:cleanup": "rm -rf ./lib",
+		"build": "yarn build:cleanup && tsc",
 		"test": "jest",
 		"test:watch": "jest --watch",
 		"docs": "typedoc",
-		"size": "yarn build && size-limit"
+		"size": "yarn build && size-limit",
+		"size:build": "tsc"
 	},
 	"files": [
 		"lib/"
