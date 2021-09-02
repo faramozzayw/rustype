@@ -29,8 +29,7 @@
 		"test": "jest",
 		"test:watch": "jest --watch",
 		"docs": "typedoc",
-		"size": "yarn build && size-limit",
-		"size:build": "npm i --global yarn && tsc"
+		"size": "yarn build && size-limit"
 	},
 	"files": [
 		"lib/"
