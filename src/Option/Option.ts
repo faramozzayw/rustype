@@ -1,15 +1,10 @@
 import clone from "clone-deep";
-
-import { OptionType } from "../types";
-import { Some, None } from "./values";
-
 import { Ok, Err, Result } from "../Result";
-import { unwrapFailed } from "../utils/unwrap-failed";
 import { Clone } from "../utils";
 
-interface OptionMatch<T, ReturnSome, ReturnNone> {
-	some?: (some: T) => ReturnSome;
-	none?: () => ReturnNone;
+interface OptionMatch<T,A> {
+	some: (some: T) => A;
+	none: () => A;
 }
 
 /**
@@ -25,30 +20,27 @@ interface OptionMatch<T, ReturnSome, ReturnNone> {
  *
  * @category Option
  */
+export type Lazy<A> = () => A 
+export type Fn<A,B> = (_:A) => B
+
+
+const toClone = <A,B>(f:Fn<A,B>) => (x:A): B => f(clone(x))
+
 export class Option<T> implements Clone<Option<T>> {
-	/** @ignore */
-	private data: OptionType<T>;
+	private maybe: <A>(ifNone: Lazy<A>, ifSome: Fn<T,A>) => A
 
-	/** @ignore */
-	constructor(data: OptionType<T>) {
-		this.data = data;
+	static mkSome = <T>(x:T) => 
+		new Option<T>(<A>(_: Lazy<A>, some: Fn<T,A>): A => some(x))
+	static mkNone = <T>() => 
+		new Option<T>(<A>(none: Lazy<A>, _: Fn<T,A>): A => none())
+	private constructor(maybe: <A>(ifNone: Lazy<A>, ifSome: Fn<T,A>) => A){
+		this.maybe = maybe
 	}
 
-	public clone() {
-		return new Option<T>(clone(this.data));
-	}
-
-	private cloneInnerValue(): T {
-		return clone<T>(this.data as T);
-	}
-
-	/**
-	 * Returns the "default value" for a Option<T> => `None`.
-	 */
-	public static makeDefault() {
-		return None();
-	}
-
+	clone = (): Option<T> => 
+		this.maybe(
+			() => None(),
+			x  => Some(clone(x)))
 	/**
 	 * Pattern match to retrieve the value
 	 *
@@ -73,29 +65,13 @@ export class Option<T> implements Clone<Option<T>> {
 	 * })).toEqual(404)
 	 * ```
 	 */
-	public match<Some, None>({
-		some,
-		none,
-	}: OptionMatch<T, Some, None>): Some | None | null {
-		if (this.isNone()) return none ? none() : null;
-
-		return some ? some(this.cloneInnerValue()) : null;
-	}
+	match = <A>({none,some}: OptionMatch<T,A>): A =>
+		this.maybe(none,some)
 
 	/** Returns `true` if the option is a `Some` value. */
-	public isSome(): boolean {
-		if (typeof this.data === "undefined" || this.data === null) {
-			return false;
-		}
-
-		return true;
-	}
-
+	isSome = (): boolean => this.maybe(() => false, _ => true)
 	/** Returns `true` if the option is a `None` value. */
-	public isNone(): boolean {
-		return !this.isSome();
-	}
-
+	isNone = (): boolean => !this.isSome()
 	/**
 	 * Returns the contained Some value, consuming the self value.
 	 *
@@ -103,33 +79,8 @@ export class Option<T> implements Clone<Option<T>> {
 	 *
 	 * Panics if the value is a `None` with a custom panic message provided by msg. [`Error`]
 	 */
-	public expect(msg: string): T | never {
-		if (this.isNone()) {
-			throw new Error(msg);
-		}
-
-		return this.cloneInnerValue();
-	}
-
-	/**
-	 * Inserts value into the option
-	 *
-	 * If the option already contains a value, the old value is dropped.
-	 *
-	 * @unsafe
-	 *
-	 * ### Example
-	 * ```ts
-	 * expect(None().unsafe_insert(5)).toEqual(Some(5));
-	 * expect(Some(0).unsafe_insert(65)).toEqual(Some(65));
-	 * ```
-	 */
-	public unsafe_insert(val: T): Option<T> {
-		this.data = val;
-
-		return this;
-	}
-
+	expect = (err: string): T | never => 
+		this.maybe( () => {throw Error(err)}, clone)
 	/**
 	 * Returns the contained `Some` value, consuming the self value.
 	 *
@@ -144,14 +95,9 @@ export class Option<T> implements Clone<Option<T>> {
 	 * expect(None().unwrap).toThrow(TypeError);
 	 * ```
 	 */
-	public unwrap(): T | never {
-		if (this.isNone()) {
-			throw TypeError("called `Option::unwrap()` on a `None` value");
-		}
-
-		return this.data as T;
-	}
-
+	unwrap = (): T | never => this.maybe
+		( () => { throw TypeError("called `Option.unwrap()` on a `None` value") } 
+		, clone)
 	/**
 	 * Returns the contained `Some` value or a provided default.
 	 *
@@ -161,12 +107,8 @@ export class Option<T> implements Clone<Option<T>> {
 	 * expect(some.unwrapOrElse(() => "NONE")).toEqual("SOME");
 	 * ```
 	 */
-	public unwrapOr(defaultVal: T): T {
-		if (this.isNone()) return defaultVal;
-
-		return this.data as T;
-	}
-
+	unwrapOr = (ifNone: T): T => 
+		this.maybe(() => ifNone, clone)
 	/**
 	 * Returns the contained `Some` value or computes it from a closure.
 	 *
@@ -175,14 +117,8 @@ export class Option<T> implements Clone<Option<T>> {
 	 * expect(None().unwrapOrElse(() => "NONE")).toEqual("NONE");
 	 * ```
 	 */
-	public unwrapOrElse<F extends () => T>(fn: F): T {
-		if (this.isNone()) {
-			return fn();
-		}
-
-		return this.data as T;
-	}
-
+	unwrapOrElse = (ifNone: Lazy<T>): T =>
+		this.maybe(ifNone, clone)
 	/**
 	 * Maps an `Option<T>` to `Option<U>` by applying a function to a contained value.
 	 *
@@ -193,12 +129,8 @@ export class Option<T> implements Clone<Option<T>> {
 	 * expect(mappedSome.unwrap()).toEqual({ data: false });
 	 * ```
 	 */
-	public map<U, F extends (data: T) => U>(fn: F): Option<U> {
-		if (this.isNone()) return None<U>();
-
-		return Some(fn(this.cloneInnerValue()));
-	}
-
+	map = <U>(f: Fn<T,U>): Option<U> =>
+		this.andThen(x => Some(f(clone(x))))
 	/**
 	 * Applies a function to the contained value (if any), or returns the provided
 	 * default (if not).
@@ -212,12 +144,8 @@ export class Option<T> implements Clone<Option<T>> {
 	 * expect(mappedSome).toEqual(200);
 	 * ```
 	 */
-	public mapOr<U, F extends (data: T) => U>(defaultVal: U, fn: F): U {
-		if (this.isNone()) return defaultVal;
-
-		return fn(this.cloneInnerValue());
-	}
-
+	mapOr = <U>(ifNone: U, f: Fn<T,U>): U =>
+		this.maybe(() => ifNone,toClone(f))
 	/**
 	 * Applies a function to the contained value (if any), or computes a default (if not).
 	 *
@@ -234,15 +162,8 @@ export class Option<T> implements Clone<Option<T>> {
 	 * expect(mappedNone).toEqual(500);
 	 * ```
 	 */
-	public mapOrElse<U, D extends () => U, F extends (data: T) => U>(
-		defaultFn: D,
-		fn: F,
-	): U {
-		if (this.isNone()) return defaultFn();
-
-		return fn(this.cloneInnerValue());
-	}
-
+	mapOrElse = <U>(ifNone: Lazy<U>, f: Fn<T,U>): U =>
+		this.maybe(ifNone,toClone(f))
 	/**
 	 * Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to `Ok(v)` and `None` to `Err(err)`.
 	 *
@@ -255,14 +176,8 @@ export class Option<T> implements Clone<Option<T>> {
 	 * expect(None().okOr("Failed")).toEqual(Err("Failed"));
 	 * ```
 	 */
-	public okOr<E>(err: E): Result<T, E> {
-		if (this.isSome()) {
-			return Ok(this.cloneInnerValue());
-		}
-
-		return Err(err);
-	}
-
+	okOr = <E>(err: E): Result<T,E> =>
+		this.maybe(() => Err(err),Ok)
 	/**
 	 * Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to `Ok(v)` and `None` to `Err(err())`.
 	 *
@@ -274,14 +189,8 @@ export class Option<T> implements Clone<Option<T>> {
 	 * expect(None().okOrElse(failFn)).toEqual(Err("Failed"));
 	 * ```
 	 */
-	public okOrElse<E, F extends () => E>(fn: F) {
-		if (this.isNone()) {
-			return Err(fn());
-		}
-
-		return Ok(this.cloneInnerValue());
-	}
-
+	okOrElse = <E>(ifNone: Lazy<E>): Result<T,E> =>
+		this.maybe(() => Err(ifNone()),x => Ok(clone(x)))
 	/**
 	 * Returns None if the option is `None`, otherwise calls f with the wrapped
 	 * value and returns the result.
@@ -297,14 +206,8 @@ export class Option<T> implements Clone<Option<T>> {
 	 * expect(result.unwrap()).toEqual(630);
 	 * ```
 	 */
-	public andThen<U extends T, F extends (data: T) => Option<U>>(
-		fn: F,
-	): Option<U> {
-		if (this.isNone()) return None();
-
-		return fn(this.cloneInnerValue());
-	}
-
+	andThen = <U>(f: Fn<T,Option<U>>): Option<U> =>
+		this.maybe(None,(x:T): Option<U> => f(clone(x)))
 	/**
 	 * > Returns `None` if the option is `None`, otherwise calls `predicate` with
 	 * the wrapped value and returns: - [`Some(t)`] if `predicate` returns `true`
@@ -322,17 +225,8 @@ export class Option<T> implements Clone<Option<T>> {
 	 * expect(Some(200).filter((item) => item === 200).unwrapOr(500)).toEqual(200);
 	 * ```
 	 */
-	public filter<P extends (data: T) => boolean>(predicate: P): Option<T> {
-		if (this.isNone()) return None();
-
-		const clone = this.cloneInnerValue();
-		if (predicate(clone)) {
-			return Some(clone);
-		}
-
-		return None();
-	}
-
+	filter = (predicate: Fn<T,boolean>): Option<T> =>
+		this.andThen(x => predicate(x) ? Some(x) : None())
 	/**
 	 * Replaces the actual value in the option by the value given in parameter,
 	 * returning the old value if present, leaving a `Some` in its place without
@@ -346,12 +240,7 @@ export class Option<T> implements Clone<Option<T>> {
 	 * expect(some.unwrap()).toEqual(250);
 	 * ```
 	 */
-	public replace(value: T): Option<T> {
-		const old = this.cloneInnerValue();
-		this.data = value;
-		return Some(old);
-	}
-
+	replace = (on: T): Option<T> => this.map(_ => on)
 	/**
 	 * Zips `self` with another `Option`.
 	 *
@@ -367,77 +256,10 @@ export class Option<T> implements Clone<Option<T>> {
 	 * expect(x.zip(y)).toEqual(Some([1, "hi"])); expect(x.zip(z)).toEqual(None());
 	 * ```
 	 */
-	public zip<U>(other: Option<U>): Option<[T, U]> {
-		if (this.isNone() || other.isNone()) return None();
-
-		return Some([this.unwrap(), other.unwrap()]);
-	}
-
-	/**
-	 * Transposes an `Option` of a `Result` into a `Result` of an `Option`.
-	 *
-	 * `None` will be mapped to `Ok(None)`. `Some(Ok(_))` and `Some(Err(_))` will
-	 * be mapped to `Ok(Some(_))` and `Err(_)`.
-	 *
-	 * ### Panics Panics if the value is an `Some` where self is not an `Result`,
-	 * with a panic message provided by the `Some`'s value.
-	 *
-	 * ### Example
-	 * ```ts
-	 * const x: Result<Option<number>, string> = Ok(Some(5));
-	 * const y: Option<Result<number, string>> = Some(Ok(5));
-	 *
-	 * expect(x).toEqual(y.transpose());
-	 * ```
-	 */
-	public transpose<E extends unknown>(): Result<Option<T>, E> {
-		if (this.isNone()) return Ok(None());
-
-		if (this.data instanceof Result) {
-			if (this.data.isOk()) {
-				const innerValue = this.data.unwrap();
-				return Ok(Some(innerValue));
-			}
-
-			const innerError = this.data.unwrap();
-			return Err<E>(innerError);
-		} else {
-			unwrapFailed(
-				"called `Option::transpose()` on an `Some` value where `self` is not an `Result`",
-				this.data,
-			);
-		}
-	}
-
-	/**
-	 * Converts from Option<Option<T>> to Option<T>
-	 *
-	 * ### Example
-	 * ```ts
-	 * expect(Some(Some(Some(50))).flatten()).toEqual(Some(Some(50)));
-	 * expect(Some(Some(50)).flatten()).toEqual(Some(50));
-	 *
-	 * expect(Some(50).flatten()).toEqual(Some(50));
-	 * expect(Some(50).flatten().unwrap()).toEqual(50);
-	 *
-	 * expect(Some(None()).flatten()).toEqual(None());
-	 * expect(None().flatten()).toEqual(None());
-	 * ```
-	 */
-	public flatten(): Option<T> {
-		if (this.isNone()) return None();
-
-		if (this.data instanceof Option) {
-			return this.data;
-		}
-
-		return Some(this.data);
-	}
-
+	zip = <U>(withVal: Option<U>): Option<[T, U]> =>
+		this.andThen(x => withVal.map(y => [clone(x),clone(y)]))
 	/**
 	 * Returns a string representation of an object.
-	 *
-	 * @override
 	 *
 	 * ### Example
 	 * ```ts
@@ -450,16 +272,53 @@ export class Option<T> implements Clone<Option<T>> {
 	 * expect(Some({ code: 15 }).toString()).toEqual("Some([object Object])");
 	 * ```
 	 */
-	public toString() {
-		if (this.isNone()) return "None";
-
-		return `Some(${((this.data as unknown) as object).toString()})`;
-	}
-
-	/** Returns `None` if the option is `None`, otherwise returns `optb`. */
-	private and<U>(optb: Option<U>): Option<U> {
-		if (this.isNone()) return None();
-
-		return optb;
-	}
+	toString = (): string => 
+		this.maybe(
+			() => 'None()',
+			x => `Some(${(x as unknown as object).toString()})`)
 }
+/**
+ * Transposes an `Option` of a `Result` into a `Result` of an `Option`.
+ *
+ * `None` will be mapped to `Ok(None)`. `Some(Ok(_))` and `Some(Err(_))` will
+ * be mapped to `Ok(Some(_))` and `Err(_)`.
+ *
+ * ### Panics Panics if the value is an `Some` where self is not an `Result`,
+ * with a panic message provided by the `Some`'s value.
+ *
+ * ### Example
+ * ```ts
+ * const x: Result<Option<number>, string> = Ok(Some(5));
+ * const y: Option<Result<number, string>> = Some(Ok(5));
+ *
+ * expect(x).toEqual(y.transpose());
+ * ```
+ */
+ export const transpose = 
+	<T,E>(x: Option<Result<T,E>>): Result<Option<T>,E> =>
+	
+	x.mapOrElse(
+		() => Ok(None<T>()),
+		r => r.mapOrElse(
+			err => Err(err),
+			ok => Ok(Some(ok))))
+/**
+* Converts from Option<Option<T>> to Option<T>
+*
+* ### Example
+* ```ts
+* expect(Some(Some(Some(50))).flatten()).toEqual(Some(Some(50)));
+* expect(Some(Some(50)).flatten()).toEqual(Some(50));
+*
+* expect(Some(50).flatten()).toEqual(Some(50));
+* expect(Some(50).flatten().unwrap()).toEqual(50);
+*
+* expect(Some(None()).flatten()).toEqual(None());
+* expect(None().flatten()).toEqual(None());
+* ```
+*/
+export const flatten = <T>(x:Option<Option<T>>) => 
+	x.andThen((y:Option<T>) => y)
+
+export const Some = Option.mkSome
+export const None = Option.mkNone

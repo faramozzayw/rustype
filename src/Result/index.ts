@@ -1,5 +1,4 @@
-export { Result } from "./Result";
-export { Err, Ok } from "./values";
+export { Result, Ok, Err } from "./Result";
 
 /*
 export abstract class Default {

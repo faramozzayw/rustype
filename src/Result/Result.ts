@@ -4,11 +4,12 @@ import { Clone, unwrapFailed } from "../utils";
 import { ResultVariants } from "../types";
 import { None, Some, Option } from "../Option";
 
-interface ResultMatch<T, E, Ok, Err> {
-	ok?: (ok: T) => Ok;
-	err?: (err: E) => Err;
+interface ResultMatch<T,E,A> {
+	ok: (ok: T) => A;
+	err: (err: E) => A;
 }
-
+export type Lazy<A> = () => A 
+export type Fn<A,B> = (_:A) => B
 /**
  * Error handling with the Result type.
  *
@@ -18,49 +19,46 @@ interface ResultMatch<T, E, Ok, Err> {
  *
  * @category Result
  */
+const id = <T>(x:T) => x
+type EitherType<T,E> = <A>(ifErr: Fn<E,A>, ifOk: Fn<T,A>) => A
+const toClone = <A,B>(f:Fn<A,B>) => (x:A): B => f(clone(x))
+
 export class Result<T, E> implements Clone<Result<T, E>> {
-	/** @ignore */
-	private type: ResultVariants;
-	/** @ignore */
-	private error?: E;
-	/** @ignore */
-	private data?: T;
 
-	/** @ignore */
-	protected constructor(type: ResultVariants, content: T | E) {
-		this.type = type;
-		if (type === "ok") {
-			this.data = content as T;
-		} else {
-			this.error = content as E;
-		}
+	private either: EitherType<T,E>
+
+	private constructor(either: EitherType<T,E>) {
+		this.either = either
 	}
+	public static mkOk = <T,E>(ok:T) => 
+		new Result(<A>(_: Fn<E,A>, ifOk: Fn<T,A>): A => ifOk(ok))
+	public static mkErr = <T,E>(err:E) => 
+		new Result(<A>(ifErr: Fn<E,A>,_: Fn<T,A>): A => ifErr(err))
 
+	/** Returns `true` if the result is `Ok`. */
+	public isOk = (): boolean => this.either(_ => false, _ => true)
+
+	/** Returns `true` if the result is `Err`. */
+	public isErr = (): boolean => !this.isOk
 	/**
 	 * Returns a copy for `Ok` of the contained value using its own value.
-	 * @ignore
 	 */
-	private cloneOk(): T {
-		if (this.isOk()) return clone(this.data as T);
-
-		throw Error("called `Result::cloneOk()` on a `Error` value");
-	}
-
+	private cloneOk = (): T =>
+		this.either(
+			_ => {throw Error("called `Result::cloneOk()` on a `Error` value")}
+			,clone)
 	/**
 	 * Returns a copy for `Err` of the contained value using its own value.
-	 * @ignore
 	 */
-	private cloneErr(): E {
-		if (this.isErr()) return clone(this.error as E);
+	private cloneErr = (): E =>
+		this.either(
+			clone,
+			_ => {throw Error("called `Result::cloneErr()` on a `Ok` value")})
 
-		throw Error("called `Result::cloneErr()` on a `Ok` value");
-	}
-
-	public clone(): Result<T, E> {
-		const data = (this.isOk() ? this.data : this.err) as T | E;
-		return new Result<T, E>(this.type, data);
-	}
-
+	public clone = (): Result<T,E> =>
+		this.either(
+			err => {const errc = err; return Err(errc)},
+			ok  => {const okc  =  ok; return Ok(okc)})
 	/**
 	 * Pattern match to retrieve the value
 	 *
@@ -83,25 +81,8 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * expect(Ok("nice").match({  err: _ => "not nice" })).toBeNull();
 	 * ```
 	 */
-	public match<Ok, Err>({
-		ok,
-		err,
-	}: ResultMatch<T, E, Ok, Err>): Ok | Err | null {
-		if (this.isErr()) return err ? err(this.cloneErr()) : null;
-
-		return ok ? ok(this.cloneOk()) : null;
-	}
-
-	/** Returns `true` if the result is `Ok`. */
-	public isOk(): boolean {
-		return this.type === "ok";
-	}
-
-	/** Returns `true` if the result is `Err`. */
-	public isErr(): boolean {
-		return this.type === "err";
-	}
-
+	public match = <A>({ok,err}: ResultMatch<T,E,A>): A => 
+		this.either(e => err(clone(e)), o => ok(clone(o)))	
 	/**
 	 *
 	 * Returns the contained `Ok` value, consuming the `self` value.
@@ -120,24 +101,16 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * }
 	 * ```
 	 */
-	public expect(msg: string): T | never {
-		if (this.isErr()) unwrapFailed(msg, this.cloneErr());
-
-		return this.cloneOk();
-	}
-
+	public expect = (msg: string): T | never =>
+		this.either(err => unwrapFailed(msg, clone(err)), clone)
 	/**
 	 * Returns the contained Err value, consuming the self value.
 	 *
 	 * ### Panics
 	 * Panics if the value is an Ok, with a panic message including the passed message, and the content of the Ok.
 	 */
-	public expectErr(msg: string): E | never {
-		if (this.isOk()) unwrapFailed(msg, this.cloneOk());
-
-		return this.cloneErr();
-	}
-
+	public expectErr = (msg: string): E | never =>
+		this.either(clone, ok => unwrapFailed(msg, clone(ok)))
 	/**
 	 * Converts from `Result<T, E>` to `Option<T>`.
 	 *
@@ -152,12 +125,7 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * expect(err.ok()).toEqual(None());
 	 * ```
 	 */
-	public ok(): Option<T> {
-		if (this.isErr()) return None();
-
-		return Some(this.data);
-	}
-
+	public ok = (): Option<T> => this.either(_ => None(),Some)
 	/**
 	 * Converts from `Result<T, E>` to `Option<E>`.
 	 * Converts `self` into an `Option<E>`, consuming `self`,
@@ -172,12 +140,7 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * expect(err.err()).toEqual(Some("err"));
 	 * ```
 	 */
-	public err(): Option<E> {
-		if (this.isOk()) return None();
-
-		return Some(this.error);
-	}
-
+	public err = (): Option<E> => this.either(Some,_ => None())
 	/**
 	 * Returns the contained `Ok` value, consuming the `self` value.
 	 *
@@ -199,14 +162,10 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * ).toThrow(Error);
 	 * ```
 	 */
-	public unwrap(): T | never {
-		if (this.isErr()) {
-			unwrapFailed("called `Result::unwrap()` on a `Error` value", this.error);
-		}
-
-		return this.data as T;
-	}
-
+	public unwrap = (): T | never =>
+		this.either(
+			err => unwrapFailed("called `Result.unwrap()` on a `Error` value", err),
+			clone)
 	/**
 	 * Returns the contained `Err` value, consuming the `self` value.
 	 *
@@ -228,13 +187,9 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * });
 	 * ```
 	 */
-	public unwrapErr(): E | never {
-		if (this.isOk())
-			unwrapFailed("called `Result::unwrap_err()` on an `Ok` value", this.data);
-
-		return this.error as E;
-	}
-
+	public unwrapErr = (): E | never =>
+		this.either(clone,
+			err => unwrapFailed("called `Result.unwrap_err()` on an `Ok` value", err))
 	/**
 	 * Returns the contained `Ok` value or a provided default.
 	 * 
@@ -255,12 +210,7 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * });
 	 * ```
 	 */
-	public unwrapOr(defaultVal: T): T {
-		if (this.isErr()) return defaultVal;
-
-		return this.data as T;
-	}
-
+	public unwrapOr = (ifErr: T): T => this.either(_ => ifErr,clone)
 	/**
 	 * Returns the contained `Ok` value or computes it from a closure.
 	 *
@@ -270,14 +220,8 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * expect(Err("Error").unwrapOrElse(() => "Else")).toEqual("Else");
 	 * ```
 	 */
-	public unwrapOrElse<F extends () => T>(fn: F): T {
-		if (this.isErr()) {
-			return fn();
-		}
-
-		return this.data as T;
-	}
-
+	public unwrapOrElse = (ifErr: Lazy<T>): T => 
+		this.either(_ => ifErr(),clone)
 	/**
 	 * Maps a `Result<T, E>` to `Result<U, E>` by applying a function to a contained `Ok` value,
 	 * leaving an `Err` value untouched.
@@ -292,12 +236,8 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * expect(y.map((item) => item * 5)).toEqual(Ok(25));
 	 * ```
 	 */
-	public map<U, F extends (data: T) => U>(fn: F): Result<U, E> {
-		if (this.isErr()) return new Err(this.error as E);
-
-		return new Ok(fn(this.data as T));
-	}
-
+	public map = <U>(f: Fn<T,U>): Result<U,E> => 
+		this.andThen(x => Ok(f(clone(x))))
 	/**
 	 * Applies a function to the contained value (if `Ok`), or returns the provided default (if `Err`).
 	 *
@@ -314,12 +254,8 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * expect(y.mapOr(42 as number, (v) => v.length)).toEqual(42);
 	 * ```
 	 */
-	public mapOr<U, F extends (data: T) => U>(defaultValue: U, fn: F): U {
-		if (this.isErr()) return defaultValue;
-
-		return fn(this.data as T);
-	}
-
+	public mapOr = <U>(ifErr: U, f: Fn<T,U>): U =>
+		this.either(_ => ifErr, toClone(f))
 	/**
 	 * Maps a `Result<T, E>` to `U` by applying a function to a contained `Ok` value, 
 	 * or a fallback function to a contained `Err` value. 
@@ -345,12 +281,8 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * ).toEqual("bar");
 	 * ```
 	 */
-	public mapOrElse<U>(defaultFn: (err: E) => U, fn: (data: T) => U): U {
-		if (this.isErr()) return defaultFn(this.error as E);
-
-		return fn(this.data as T);
-	}
-
+	public mapOrElse = <U>(ifErr: Fn<E,U>, ifOk: Fn<T,U>): U =>
+		this.either(toClone(ifErr), toClone(ifOk))
 	/**
 	 * Maps a `Result<T, E>` to `Result<T, F>` by applying a function to a contained `Err`
 	 * value, leaving an `Ok` value untouched.
@@ -368,12 +300,10 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * expect(y.mapErr(stringify)).toEqual(Err("error code: 13"));
 	 * ```
 	 */
-	public mapErr<F>(fn: (err: E) => F): Result<T, F> {
-		if (this.isOk()) return new Ok(this.data as T);
-
-		return new Err(fn(this.error as E));
-	}
-
+	public mapErr = <F>(f: Fn<E,F>): Result<T,F> =>
+		this.either(
+			err => Err(f(clone(err))),
+			ok  => Ok(ok))
 	/**
 	 * Calls op if the result is Ok, otherwise returns the Err value of self.
 	 *
@@ -389,70 +319,8 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * expect(result.unwrap()).toEqual(630);
 	 * ```
 	 */
-	public andThen<U extends T, F extends (data: T) => Result<U, E>>(
-		fn: F,
-	): Result<U, E> {
-		if (this.isErr()) return new Err(this.cloneErr());
-
-		return fn(this.cloneOk());
-	}
-
-	/**
-	 * Transposes a Result of an Option into an Option of a Result.
-	 *
-	 * `Ok(None)` will be mapped to None. `Ok(Some(_))` and `Err(_)` will be mapped to `Some(Ok(_))` and `Some(Err(_))`.
-	 *
-	 * ### Panics
-	 * Panics if the value is an `Ok` where self is not an `Option`, with a panic message provided by the `Ok`'s value.
-	 *
-	 * ### Example
-	 * ```ts
-	 * const x: Result<Option<number>, string> = Ok(Some(5));
-	 * const y: Option<Result<number, string>> = Some(Ok(5));
-	 *
-	 * expect(x.transpose()).toEqual(y);
-	 * ```
-	 */
-	public transpose(): Option<Result<T, E>> {
-		if (this.isErr()) return Some(new Err(this.cloneErr()));
-
-		if (this.data instanceof Option) {
-			if (this.data.isSome()) {
-				const innerValue = this.data.unwrap();
-				return Some(new Ok(innerValue));
-			}
-
-			return None();
-		} else {
-			unwrapFailed(
-				"called `Result::transpose()` on an `Ok` value where `self` is not an `Option`",
-				this.data,
-			);
-		}
-	}
-
-	/**
-	 * Converts from `Result<Result<T, E>, E>` to `Result<T, E>`
-	 *
-	 * ### Example
-	 * ```ts
-	 * expect(Ok(Ok(50)).flatten()).toEqual(Ok(50));
-	 * expect(Ok(50).flatten().unwrap()).toEqual(50);
-	 *
-	 * expect(Ok(Err("Error")).flatten()).toEqual(Err("Error"));
-	 * expect(Err("Error").flatten()).toEqual(Err("Error"));
-	 * ```
-	 */
-	public flatten(): Result<T, E> {
-		if (this.isErr()) return new Err(this.cloneErr());
-
-		if (this.data instanceof Result) {
-			return this.data;
-		}
-
-		return new Ok(this.cloneOk());
-	}
-
+	public andThen = <U>(f: Fn<T,Result<U,E>>): Result<U, E> =>
+		this.either(err => Err(err),ok => f(clone(ok)))
 	/**
 	 * Returns a string representation of an object.
 	 *
@@ -470,21 +338,49 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * expect(Err({ code: 15 }).toString()).toEqual("Err([object Object])");
 	 * ```
 	 */
-	public toString() {
-		return this.isOk()
-			? `Ok(${((this.data as unknown) as object).toString()})`
-			: `Err(${((this.error as unknown) as object).toString()})`;
-	}
+
+	/**
+	 * Transposes a Result of an Option into an Option of a Result.
+	 *
+	 * `Ok(None)` will be mapped to None. `Ok(Some(_))` and `Err(_)` will be mapped to `Some(Ok(_))` and `Some(Err(_))`.
+	 *
+	 * ### Panics
+	 * Panics if the value is an `Ok` where self is not an `Option`, with a panic message provided by the `Ok`'s value.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const x: Result<Option<number>, string> = Ok(Some(5));
+	 * const y: Option<Result<number, string>> = Some(Ok(5));
+	 *
+	 * expect(Result.transpose(x)).toEqual(y);
+	 * ```
+	 */
+	public static transpose = <T,E>(x: Result<Option<T>, E>): Option<Result<T, E>> =>
+		x.either(
+			(err: E) => Some(Err(err)), 
+			(ok: Option<T>) => ok.mapOr(
+				None(),
+				(val:T) => Some(Ok(val))))
+	/**
+	 * Converts from `Result<Result<T, E>, E>` to `Result<T, E>`
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(Result.flatten(Ok(Ok(50))).toEqual(Ok(50));
+	 * expect(Result.flatten(Ok(50)).unwrap()).toEqual(50);
+	 *
+	 * expect(Result.flatten(Ok(Err("Error")))).toEqual(Err("Error"));
+	 * expect(Result.flatten(Err("Error"))).toEqual(Err("Error"));
+	 * ```
+	 */
+	public static flatten = <T,E>(x: Result<Result<T,E>,E>): Result<T,E> =>
+		x.andThen(id)
+
+	public toString = () =>
+		this.either(
+			err =>`Err(${(err as unknown as object).toString()})`,
+			ok => `Ok(${(ok as unknown as object).toString()})`)
 }
 
-export class Err<E> extends Result<any, E> {
-	constructor(error: E) {
-		super("err", error);
-	}
-}
-
-export class Ok<T> extends Result<T, any> {
-	constructor(data: T) {
-		super("ok", data);
-	}
-}
+export const Ok = Result.mkOk
+export const Err = Result.mkErr
