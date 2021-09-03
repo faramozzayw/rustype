@@ -3,8 +3,6 @@ import { None, Some, Option, Ok, Err, Result, Lazy, Fn, Fn2 } from "./../src";
 
 const id = <A>(x:A): A => x
 
-
-
 describe("Option", () => {
 	it("toString", () => {
 		const prop = (x:any) =>
@@ -14,9 +12,11 @@ describe("Option", () => {
 		let inputs : any[] = [22,"cat",{dog:4},null,undefined]
 		inputs.forEach(prop)
 	});
-	it("selfEq", () => {expect(None()).toEqual(None())})
-	it("selfEq3", () => {expect(Some(44)).toEqual(Some(44))})
-	it("selfEq2", () => {expect(None<number>()).toEqual(None<string>())})
+	it("equality is working", () => {
+		expect(None()).toEqual(None())
+		expect(Some(44)).toEqual(Some(44))
+		expect(None<number>()).toEqual(None<string>())
+	})
 	it("maybe", () => {
 		let prop = <A,B>(x:A, f:Lazy<B>,g: Fn<A,B>) => {
 			expect(Some(x).maybe(f,g)).toEqual(g(x))
@@ -41,7 +41,7 @@ describe("Option", () => {
 		let inputs : any[] = [22,"cat",{dog:4},null,undefined]
 		inputs.forEach(prop)
 	});
-
+	// Pattern-matching
 	it("expect", () => {
 		let prop = <A>(x:A ,msg: string) => {
 			expect(Some(x).expect(msg)).toEqual(x)
@@ -64,7 +64,6 @@ describe("Option", () => {
 			.toThrowError(new Error("called `Option.unwrap()` on a `None` value"))
 		}
 	});
-
 	it("unwrapOr", () => {
 		let prop = <A>(x:A, alt: A) => {
 			expect(Some(x).unwrapOr(alt)).toEqual(x)
@@ -78,17 +77,6 @@ describe("Option", () => {
 			expect(None().unwrapOrElse(alt)).toEqual(alt())
 		}
 	});
-	it("map", () => {
-		const identity = <A>(x: Option<A>) => 
-			expect(x.map(id)).toEqual(x)
-		const composition = <A,B,C>
-			(x: Option<A>
-			,f: Fn<A,B>
-			,g: Fn<B,C>) =>
-
-			expect(x.map(f).map(g)).toEqual(x.map(y => g(f(y))))
-	});
-
 	it("mapOr", () => {
 		const prop = <A,B>(x:A, f: Fn<A,B>, alt: B) => {
 			expect(Some(x).mapOr(alt,f)).toEqual(f(x))
@@ -115,26 +103,69 @@ describe("Option", () => {
 			expect(None().okOrElse(alt)).toEqual(Err(alt()))
 		}
 	});
+	it("transpose", () => {
+		let props = <A,B>(x:A,y:B) => {
+			expect(Option.transpose(Some(Ok(x)))).toEqual(Ok(Some(x)))
+			expect(Option.transpose(Some(Err(y)))).toEqual(Err(y))
+			expect(Option.transpose(None<Result<A,B>>())).toEqual(Ok(None()))
+		}
+		let isomorphicToResult = <A,E>(x: Result<Option<A>,E>) =>
+			expect(Option.transpose(Result.transpose(x))).toEqual(x)
+	});
+	it("transpose: Option<Result<A,B>> isomorphic to Result<Option<A>,B>", () => {
+		let props = <A,B>(x:A,y:B) => {
+			expect(Option.transpose(Some(Ok(x)))).toEqual(Ok(Some(x)))
+			expect(Option.transpose(Some(Err(y)))).toEqual(Err(y))
+			expect(Option.transpose(None<Result<A,B>>())).toEqual(Ok(None()))
+		}
+		let isomorphicToResult = <A,E>(x: Result<Option<A>,E>) =>
+			expect(Option.transpose(Result.transpose(x))).toEqual(x)
+	});
+	// Functor
+	it("map: identity (functor)", () => {
+		const identity = <A>(x: Option<A>) => 
+			expect(x.map(id)).toEqual(x)
+	})
+	it("map: composition (functor)", () => {
+		const composition = <A,B,C>
+			(x: Option<A>
+			,f: Fn<A,B>
+			,g: Fn<B,C>) =>
 
-	it("ap", () => {
+			expect(x.map(f).map(g)).toEqual(x.map(y => g(f(y))))
+	});
+	it("replace", () => {
+		let props = <A,B>(x:A,y:B) => {
+			expect(Some(x).replace(y)).toEqual(Some(y))
+			expect(None().replace(y)).toEqual(None())
+		}
+	});
+	// Applicative
+	it("ap: identity (applicative)", () => {
+		const identity = <A>(x: Option<A>) => 
+			expect(x.ap(Some(id))).toEqual(x)
+	})
+	it("ap: composition (applicative)", () => {
 		type Compose<A,B,C> = (f:Fn<B,C>) => (g:Fn<A,B>) => (x:A) => C
 		const compose = <A,B,C>
 			(f:Fn<B,C>) => 
 			(g:Fn<A,B>) => 
 			(x:A) => f(g(x))
-		const identity = <A>(x: Option<A>) => 
-			expect(x.ap(Some(id))).toEqual(x)
 		const composition = <A,B,C>
 			(u: Option<Fn<B,C>>
 			,v: Option<Fn<A,B>>
 			,w: Option<A>) => 
 			expect(w.ap(v.ap(u.ap(Some<Compose<A,B,C>>(compose)))))
 			.toEqual(w.ap(v).ap(u))
+	})
+	it("ap: homomorphism (applicative)", () => {
 		const homomorphism = <A,B>(f:Fn<A,B>,x:A) =>
 			expect(Some(x).ap(Some(f))).toEqual(Some(f(x)))
+	})
+	it("ap: interchange (applicative)", () => {
 		const interchange = <A,B>(u:Option<Fn<A,B>>,x:A) =>
-			expect(Some(x).ap(u)).toEqual(u.ap(Some(f => f(x))))	
-	});
+			expect(Some(x).ap(u)).toEqual(u.ap(Some((f:Fn<A,B>) => f(x))))	
+	})
 	it("map2", () => {
 		const prop = <A,B,C>(x: A, y: B, f: Fn2<A,B,C>) => {
 			expect(Some(x).map2(Some(y),f)).toEqual(Some(f(x,y)))
@@ -144,14 +175,18 @@ describe("Option", () => {
 	});
 	it("zip", () => {
 		const prop = <A,B>(x: Option<A>, y: Option<B>) => 
-			expect(x.zip(y)).toEqual(x.map2(y,(a,b) => [a,b]))
+			expect(x.zip(y)).toEqual(x.map2(y,(a:A,b:B) => [a,b]))
 	});
-
-	it("andThen", () => {
+	// Monad
+	it("andThen: right identity (monad)", () => {
 		let right_identity = <A>(x:Option<A>) => 
 			expect(x.andThen(Some)).toEqual(x)
+	})
+	it("andThen: left identity (monad)", () => {
 		let left_identity = <A,B>(x: A, f: Fn<A,Option<B>>) => 
-			expect(Some(x).andThen(f)).toEqual(f(x))	
+			expect(Some(x).andThen(f)).toEqual(f(x))
+	})
+	it("andThen: associativity (monad)", () => {
 		let associativity = <A,B,C>
 			(x: Option<A> 
 			,f: Fn<A,Option<B>>
@@ -168,22 +203,6 @@ describe("Option", () => {
 			.toEqual(p(x) ? Some(x) : None())
 		}
 	});
-
-	it("replace", () => {
-		let props = <A,B>(x:A,y:B) => {
-			expect(Some(x).replace(y)).toEqual(Some(y))
-			expect(None().replace(y)).toEqual(None())
-		}
-	});
-
-	it("transpose", () => {
-		let props = <A,B>(x:A,y:B) => {
-			expect(Option.transpose(Some(Ok(x)))).toEqual(Ok(Some(x)))
-			expect(Option.transpose(Some(Err(y)))).toEqual(Err(y))
-			expect(Option.transpose(None<Result<A,B>>())).toEqual(Ok(None()))
-		}
-	});
-
 	it("flatten", () => {
 		let props = <A>(x:A) => {
 			expect(Option.flatten(Some(Some(x)))).toEqual(Some(x))

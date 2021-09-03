@@ -10,4 +10,7 @@ export {
 	RangeToExpr,
 	RangeToInclusiveExpr,
 } from "./Ranges";
-export { Lazy, Fn, Fn2 } from "./types"
+
+export type Lazy<A> = () => A 
+export type Fn<A,B> = (_:A) => B
+export type Fn2<A,B,C> = (x:A,y:B) => C
