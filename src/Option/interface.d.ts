@@ -208,21 +208,6 @@ export interface Option<T> {
 	filter(predicate: (data: T) => boolean): Option<T>;
 
 	/**
-	 * Replaces the actual value in the option by the value given in parameter,
-	 * returning the old value if present, leaving a `Some` in its place without
-	 * deinitializing either one.
-	 *
-	 * ### Example
-	 * ```ts
-	 * expect(Some(50).unwrap()).toEqual(50);
-	 *
-	 * const oldSome = some.replace(250); expect(oldSome.unwrap()).toEqual(50);
-	 * expect(some.unwrap()).toEqual(250);
-	 * ```
-	 */
-	replace(value: T): Option<T>;
-
-	/**
 	 * Zips `self` with another `Option`.
 	 *
 	 * If `self` is `Some(s)` and other is `Some(o)`, this method returns `Some((s,

@@ -124,11 +124,6 @@ describe("Option", () => {
 		expect(none.unwrapOrElse(() => "NONE")).toEqual("NONE");
 	});
 
-	it("unsafe_insert", () => {
-		expect(None().unsafe_insert(5)).toEqual(Some(5));
-		expect(Some(0).unsafe_insert(65)).toEqual(Some(65));
-	});
-
 	it("`map` on `Some`", () => {
 		const some = Some({ isSome: true });
 
@@ -206,17 +201,6 @@ describe("Option", () => {
 		expect(someNumber.filter((item) => item === 200).unwrapOr(500)).toEqual(
 			200,
 		);
-	});
-
-	it("replace", () => {
-		const some = Some(50);
-
-		expect(some.unwrap()).toEqual(50);
-
-		const oldSome = some.replace(250);
-
-		expect(oldSome.unwrap()).toEqual(50);
-		expect(some.unwrap()).toEqual(250);
 	});
 
 	it("zip", () => {

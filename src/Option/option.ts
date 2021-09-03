@@ -89,10 +89,9 @@ class _Some<T> implements Option<T> {
 		return fn(this.data);
 	}
 
-	public filter<P>(predicate: (data: T) => boolean): Option<T> {
-		const clone = this.data;
-		if (predicate(clone)) {
-			return Some(clone);
+	public filter(predicate: (data: T) => boolean): Option<T> {
+		if (predicate(this.data)) {
+			return Some(this.data);
 		}
 
 		return None();
@@ -110,12 +109,6 @@ class _Some<T> implements Option<T> {
 		}
 
 		return Some(this.data);
-	}
-
-	public replace(value: T): Option<T> {
-		const old = this.data;
-		this.data = value;
-		return Some(old);
 	}
 
 	public transpose<E extends unknown>(): Result<Option<T>, E> {
