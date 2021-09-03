@@ -20,8 +20,10 @@ describe("Result", () => {
 	it("splitFirst", () => {
 		expect(Vector.default().splitFirst()).toEqual(None());
 
-		expect(new Vector(1, 3, 4, 6).splitFirst()).toEqual(Some([1, [3, 4, 6]]));
-		expect(new Vector().splitFirst()).toEqual(None());
+		expect(new Vector(1, 3, 4, 6).splitFirst())
+			.toEqual(Some([1, [3, 4, 6]]));
+		expect(new Vector().splitFirst())
+			.toEqual(None());
 	});
 
 	it("last", () => {

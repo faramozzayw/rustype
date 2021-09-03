@@ -10,3 +10,4 @@ export {
 	RangeToExpr,
 	RangeToInclusiveExpr,
 } from "./Ranges";
+export { Lazy, Fn, Fn2 } from "./types"

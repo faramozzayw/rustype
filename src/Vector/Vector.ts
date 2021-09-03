@@ -61,8 +61,7 @@ export class Vector<T> extends Array<T> {
 	 * ```
 	 */
 	public first(): Option<T> {
-		const value = this[0];
-		return typeof value === "undefined" ? None() : Some(value);
+		return this.length > 0 ? Some(this[0]) : None()
 	}
 
 	/**

@@ -1,247 +1,194 @@
-import { None, Some, Option, Ok, Err, Result } from "./../src";
+import { Literal } from "@babel/types";
+import { None, Some, Option, Ok, Err, Result, Lazy, Fn, Fn2 } from "./../src";
+
+const id = <A>(x:A): A => x
+
+
 
 describe("Option", () => {
 	it("toString", () => {
-		expect(None().toString()).toEqual("None");
+		const prop = (x:any) =>
+			expect(Some(x).toString()).toEqual(`Some(${x})`)
+		expect(None().toString()).toEqual("None()")
 
-		expect(Some(5).toString()).toEqual("Some(5)");
-		expect(Some(Some(5)).toString()).toEqual("Some(Some(5))");
-
-		expect(Some({ code: 15 }).toString()).toEqual("Some([object Object])");
-
-		expect(`${None()}`).toEqual("None");
-		expect(`${Some(5)}`).toEqual("Some(5)");
+		let inputs : any[] = [22,"cat",{dog:4},null,undefined]
+		inputs.forEach(prop)
+	});
+	it("selfEq", () => {expect(None()).toEqual(None())})
+	it("selfEq3", () => {expect(Some(44)).toEqual(Some(44))})
+	it("selfEq2", () => {expect(None<number>()).toEqual(None<string>())})
+	it("maybe", () => {
+		let prop = <A,B>(x:A, f:Lazy<B>,g: Fn<A,B>) => {
+			expect(Some(x).maybe(f,g)).toEqual(g(x))
+			expect(None<A>().maybe(f,g)).toEqual(f())
+		}
+		prop(4,() => 20,x => x * 3)
+		prop(undefined,() => "nah",x => `${x}`)
 	});
 
-	it("is_some", () => {
-		const some = Some(5);
-		expect(some.isSome()).toBeTruthy();
+	it("isSome", () => {
+		let prop = <A>(x:A) => expect(Some(x).isSome()).toBeTruthy()
+		expect(None().isSome()).toBeFalsy()
 
-		expect(Some(false).isSome()).toBeTruthy();
-
-		const none = None();
-		expect(none.isSome()).toBeFalsy();
+		let inputs : any[] = [22,"cat",{dog:4},null,undefined]
+		inputs.forEach(prop)
 	});
 
-	it("is_none", () => {
-		const some = Some(5);
-		expect(some.isNone()).toBeFalsy();
+	it("isNone", () => {
+		let prop = <A>(x:A) => expect(Some(x).isNone()).toBeFalsy()
+		expect(None().isNone()).toBeTruthy()
 
-		const none = None();
-		expect(none.isNone()).toBeTruthy();
+		let inputs : any[] = [22,"cat",{dog:4},null,undefined]
+		inputs.forEach(prop)
 	});
 
 	it("expect", () => {
-		const none = None();
-		expect(() => none.expect("some")).toThrowError(new Error("some"));
-
-		const some = Some(5);
-		expect(some.expect("some")).toEqual(5);
+		let prop = <A>(x:A ,msg: string) => {
+			expect(Some(x).expect(msg)).toEqual(x)
+			expect(() => None().expect(msg)).toThrowError(new Error(msg))
+		}
+		prop(44,"Charlie")
+		prop(null,"Charlie")
+		prop(undefined,"Charlie")
 	});
 
 	it("match", () => {
-		expect(
-			Some("ok").match({
-				some: (some) => some.length,
-				none: () => "error",
-			}),
-		).toEqual(2);
-
-		expect(
-			Some({
-				text: "Lorem lorem",
-				user: "@user",
-			}).match({
-				some: (some) => some.user,
-			}),
-		).toEqual("@user");
-
-		expect(
-			None().match({
-				some: (_) => "some",
-				none: () => "Something bad wrong",
-			}),
-		).toEqual("Something bad wrong");
-
-		expect(
-			None().match({
-				some: (_) => 200,
-				none: () => 404,
-			}),
-		).toEqual(404);
+		let prop = <A,B>(x: Option<A>,f: Lazy<B>,g: Fn<A,B>) => 
+			expect(x.maybe(f,g)).toEqual(x.maybe(f,g))
 	});
 
-	it("unwrap on `Some`", () => {
-		const [some1, some2, some3] = [
-			Some(5),
-			Some([1, 3, 4]),
-			Some({
-				test: 4,
-			}),
-		];
-
-		expect(some1.unwrap()).toEqual(5);
-		expect(some2.unwrap()).toEqual([1, 3, 4]);
-		expect(some3.unwrap()).toEqual({
-			test: 4,
-		});
+	it("unwrap", () => {
+		let prop = <A>(x:A) => {
+			expect(Some(x).unwrap()).toEqual(x)
+			expect(() => None().unwrap())
+			.toThrowError(new Error("called `Option.unwrap()` on a `None` value"))
+		}
 	});
 
-	it("unwrap on `None`", () => {
-		const none = None();
-
-		expect(none.unwrap).toThrow(TypeError);
+	it("unwrapOr", () => {
+		let prop = <A>(x:A, alt: A) => {
+			expect(Some(x).unwrapOr(alt)).toEqual(x)
+			expect(None<A>().unwrapOr(alt)).toEqual(alt)
+		}
 	});
 
-	it("unwrapOr on `Some`", () => {
-		const some = Some({
-			test: true,
-		});
+	it("unwrapOrElse", () => {
+		let prop = <A>(x:A, alt: Lazy<A>) => {
+			expect(Some(x).unwrapOrElse(alt)).toEqual(x)
+			expect(None().unwrapOrElse(alt)).toEqual(alt())
+		}
+	});
+	it("map", () => {
+		const identity = <A>(x: Option<A>) => 
+			expect(x.map(id)).toEqual(x)
+		const composition = <A,B,C>
+			(x: Option<A>
+			,f: Fn<A,B>
+			,g: Fn<B,C>) =>
 
-		expect(some.unwrapOr({ test: false })).toEqual({
-			test: true,
-		});
+			expect(x.map(f).map(g)).toEqual(x.map(y => g(f(y))))
 	});
 
-	it("unwrapOr on `None`", () => {
-		const none = None();
-
-		expect(none.unwrapOr({ test: false })).toEqual({
-			test: false,
-		});
+	it("mapOr", () => {
+		const prop = <A,B>(x:A, f: Fn<A,B>, alt: B) => {
+			expect(Some(x).mapOr(alt,f)).toEqual(f(x))
+			expect(None<A>().mapOr(alt,f)).toEqual(alt)
+		}
 	});
-
-	it("unwrapOrElse on `Some`", () => {
-		const some = Some("SOME");
-
-		expect(some.unwrapOrElse(() => "NONE")).toEqual("SOME");
-	});
-
-	it("unwrapOrElse on `None`", () => {
-		const none = None();
-
-		expect(none.unwrapOrElse(() => "NONE")).toEqual("NONE");
-	});
-
-	it("unsafe_insert", () => {
-		expect(None().unsafe_insert(5)).toEqual(Some(5));
-		expect(Some(0).unsafe_insert(65)).toEqual(Some(65));
-	});
-
-	it("`map` on `Some`", () => {
-		const some = Some({ isSome: true });
-
-		const mappedSome = some.map((item) => ({
-			data: !item.isSome,
-		}));
-
-		expect(mappedSome.unwrap()).toEqual({
-			data: false,
-		});
-	});
-
-	it("`mapOr` on `Some` and None", () => {
-		const defaultStatus: number = 500;
-
-		const some = Some({ status: 200 });
-		const mappedSome = some.mapOr(defaultStatus, (data) => data.status);
-		expect(mappedSome).toEqual(200);
-
-		const none = None<{ status: number }>();
-		const mappedNone = none.mapOr(defaultStatus, (data) => data.status);
-		expect(mappedNone).toEqual(500);
-	});
-
-	it("`mapOrElse` on `Some` and None", () => {
-		const defaultStatus: number = 500;
-
-		const some = Some({ status: 200 });
-		const mappedSome = some.mapOrElse(
-			() => defaultStatus,
-			(data) => data.status,
-		);
-		expect(mappedSome).toEqual(200);
-
-		const none = None<{ status: number }>();
-		const mappedNone = none.mapOrElse(
-			() => defaultStatus,
-			(data) => data.status,
-		);
-		expect(mappedNone).toEqual(500);
+	it("mapOrElse", () => {
+		const prop = <A,B>(x:A, f: Fn<A,B>, alt: Lazy<B>) => {
+			expect(Some(x).mapOrElse(alt,f)).toEqual(f(x))
+			expect(None<A>().mapOrElse(alt,f)).toEqual(alt())
+		}
 	});
 
 	it("okOr", () => {
-		expect(Some(5).okOr("Failed")).toEqual(Ok(5));
-		expect(None().okOr("Failed")).toEqual(Err("Failed"));
+		const prop = <A,B>(x: A, alt: B) => {
+			expect(Some(x).okOr(alt)).toEqual(Ok(x))
+			expect(None().okOr(alt)).toEqual(Err(alt))
+		}
 	});
 
 	it("okOrElse", () => {
-		const failFn = () => "Failed";
+		const prop = <A,B>(x: A, alt: Lazy<B>) => {
+			expect(Some(x).okOrElse(alt)).toEqual(Ok(x))
+			expect(None().okOrElse(alt)).toEqual(Err(alt()))
+		}
+	});
 
-		expect(Some(5).okOrElse(failFn)).toEqual(Ok(5));
-		expect(None().okOrElse(failFn)).toEqual(Err("Failed"));
+	it("ap", () => {
+		type Compose<A,B,C> = (f:Fn<B,C>) => (g:Fn<A,B>) => (x:A) => C
+		const compose = <A,B,C>
+			(f:Fn<B,C>) => 
+			(g:Fn<A,B>) => 
+			(x:A) => f(g(x))
+		const identity = <A>(x: Option<A>) => 
+			expect(x.ap(Some(id))).toEqual(x)
+		const composition = <A,B,C>
+			(u: Option<Fn<B,C>>
+			,v: Option<Fn<A,B>>
+			,w: Option<A>) => 
+			expect(w.ap(v.ap(u.ap(Some<Compose<A,B,C>>(compose)))))
+			.toEqual(w.ap(v).ap(u))
+		const homomorphism = <A,B>(f:Fn<A,B>,x:A) =>
+			expect(Some(x).ap(Some(f))).toEqual(Some(f(x)))
+		const interchange = <A,B>(u:Option<Fn<A,B>>,x:A) =>
+			expect(Some(x).ap(u)).toEqual(u.ap(Some(f => f(x))))	
+	});
+	it("map2", () => {
+		const prop = <A,B,C>(x: A, y: B, f: Fn2<A,B,C>) => {
+			expect(Some(x).map2(Some(y),f)).toEqual(Some(f(x,y)))
+			expect(None<A>().map2(Some(y),f)).toEqual(None())
+			expect(Some(x).map2(None<B>(),f)).toEqual(None())
+		}
+	});
+	it("zip", () => {
+		const prop = <A,B>(x: Option<A>, y: Option<B>) => 
+			expect(x.zip(y)).toEqual(x.map2(y,(a,b) => [a,b]))
 	});
 
 	it("andThen", () => {
-		const some = Some(25);
-		const sq = (x: number) => Some(x * x);
+		let right_identity = <A>(x:Option<A>) => 
+			expect(x.andThen(Some)).toEqual(x)
+		let left_identity = <A,B>(x: A, f: Fn<A,Option<B>>) => 
+			expect(Some(x).andThen(f)).toEqual(f(x))	
+		let associativity = <A,B,C>
+			(x: Option<A> 
+			,f: Fn<A,Option<B>>
+			,g: Fn<B,Option<C>>) => 
 
-		// 25 * 25 => 625 + 5 => 630
-		const result = some.andThen(sq).andThen((x) => Some(x + 5));
-		expect(result.unwrap()).toEqual(630);
+			expect(x.andThen(y => f(y).andThen(g)))
+			.toEqual(x.andThen(f).andThen(g))	
 	});
-
-	it("`filter`", () => {
-		const some = Some({ status: 200 });
-
-		const result = some
-			.filter((item) => item.status === 200)
-			.map((_) => "Ok")
-			.unwrapOr("Error");
-
-		expect(result).toEqual("Ok");
-
-		const someNumber = Some(200);
-		expect(someNumber.filter((item) => item === 200).unwrapOr(500)).toEqual(
-			200,
-		);
+	it("filter", () => {
+		const props = <A>(x:A, p: Fn<A,boolean>) => {
+			expect(None<A>().filter(p))
+			.toEqual(None())
+			expect(Some(x).filter(p))
+			.toEqual(p(x) ? Some(x) : None())
+		}
 	});
 
 	it("replace", () => {
-		const some = Some(50);
-
-		expect(some.unwrap()).toEqual(50);
-
-		const oldSome = some.replace(250);
-
-		expect(oldSome.unwrap()).toEqual(50);
-		expect(some.unwrap()).toEqual(250);
-	});
-
-	it("zip", () => {
-		const x = Some(1);
-		const y = Some("hi");
-		const z = None();
-
-		expect(x.zip(y)).toEqual(Some([1, "hi"]));
-		expect(x.zip(z)).toEqual(None());
+		let props = <A,B>(x:A,y:B) => {
+			expect(Some(x).replace(y)).toEqual(Some(y))
+			expect(None().replace(y)).toEqual(None())
+		}
 	});
 
 	it("transpose", () => {
-		const x: Result<Option<number>, string> = Ok(Some(5));
-		const y: Option<Result<number, string>> = Some(Ok(5));
-
-		expect(x).toEqual(y.transpose());
+		let props = <A,B>(x:A,y:B) => {
+			expect(Option.transpose(Some(Ok(x)))).toEqual(Ok(Some(x)))
+			expect(Option.transpose(Some(Err(y)))).toEqual(Err(y))
+			expect(Option.transpose(None<Result<A,B>>())).toEqual(Ok(None()))
+		}
 	});
 
 	it("flatten", () => {
-		expect(Some(Some(Some(50))).flatten()).toEqual(Some(Some(50)));
-		expect(Some(Some(50)).flatten()).toEqual(Some(50));
-
-		expect(Some(50).flatten()).toEqual(Some(50));
-		expect(Some(50).flatten().unwrap()).toEqual(50);
-
-		expect(Some(None()).flatten()).toEqual(None());
-		expect(None().flatten()).toEqual(None());
+		let props = <A>(x:A) => {
+			expect(Option.flatten(Some(Some(x)))).toEqual(Some(x))
+			expect(Option.flatten(Some(None()))).toEqual(None())
+			expect(Option.flatten(None<Option<A>>())).toEqual(None())
+		}
 	});
 });
