@@ -135,6 +135,16 @@ export class Option<T> implements Clone<Option<T>> {
 	 * Applies a function to the contained value (if any), or returns the provided
 	 * default (if not).
 	 *
+	 * Relation to `Option.andThen`: `x.map(f) = x.andThen(y => Some(f(y)))`
+	 * 
+	 * Properties: 
+	 * ```
+	 * // identity 
+	 * x.map(y => y) = x
+	 * // composition
+	 * x.map(f).map(g) = x.map(y => g(f(y)))
+	 * ```
+	 * 
 	 * ### Example
 	 * ```ts
 	 * const defaultStatus: number = 500;
@@ -192,11 +202,21 @@ export class Option<T> implements Clone<Option<T>> {
 	okOrElse = <E>(ifNone: Lazy<E>): Result<T,E> =>
 		this.maybe(() => Err(ifNone()),x => Ok(clone(x)))
 	/**
-	 * Returns None if the option is `None`, otherwise calls f with the wrapped
-	 * value and returns the result.
+	 * Also known as 'flatMap', 'bind'.
+	 * If the value is present, calls `f` on it and returns the result, otherwise returns `None`.
 	 *
-	 * Some languages call this operation **flatmap**.
+	 * Also known in another languages as  **flatMap** because: `x.andThen(f) = Option.flatten(x.map(f))`
 	 *
+	 * Properties: 
+	 * ```
+	 * // right identity 
+	 * x.andThen(Some) = x
+	 * // left identity
+	 * Some(x).andThen(f) = f(x) 
+	 * // associativity
+	 * x.andThen(y => f(y).andThen(g)) = x.andThen(f).andThen(g)
+	 * ```
+	 * 
 	 * ### Example
 	 * ```ts
 	 * const some = Some(25); const sq = (x: number) => Some(x * x);
