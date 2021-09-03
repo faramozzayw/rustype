@@ -209,8 +209,16 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	/**
 	 * Maps a `Result<T, E>` to `Result<U, E>` by applying a function to a contained `Ok` value,
 	 * leaving an `Err` value untouched.
-	 * This function can be used to compose the results of two functions.
+	 * This function may be used to safely apply function to a result of computation that may fail.
 	 *
+	 * Properties: 
+	 * ```
+	 * // identity 
+	 * x.map(y => y) = x
+	 * // composition
+	 * x.map(f).map(g) = x.map(y => g(f(y)))
+	 * ```	
+	 * 
 	 * ### Example
 	 * ```ts
 	 * const x: Result<number, string> = Err("5");
@@ -231,11 +239,9 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 *
 	 * ### Example
 	 * ```ts
-	 * const x = new Ok("foo");
-	 * expect(x.mapOr(42 as number, (v) => v.length)).toEqual(3);
-	 *
-	 * const y = new Err("bar");
-	 * expect(y.mapOr(42 as number, (v) => v.length)).toEqual(42);
+	 * expect(Ok("foo").mapOr(42, v => v.length)).toEqual(3);
+	 * 
+	 * expect(Err("bar").mapOr(42, v => v.length)).toEqual(42);
 	 * ```
 	 */
 	public mapOr = <U>(ifErr: U, f: Fn<T,U>): U =>
@@ -289,18 +295,35 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 			err => Err(f(clone(err))),
 			ok  => Ok(ok))
 	/**
-	 * Calls op if the result is Ok, otherwise returns the Err value of self.
+	 * Calls `f` if the result is Ok, otherwise returns the Err value of self.
 	 *
-	 * This function can be used for control flow based on Result values.
+	 * This function may be used to compose computatuions, that may fail on each step.
+	 * 
+	 * `andThen`, `Ok`, and `Err` allow to build a control flow based on Result values.
 	 *
+	 * Also known in another languages as  **flatMap** because: `x.andThen(f) = Result.flatten(x.map(f))`
+	 *
+	 * Properties: 
+	 * ```
+	 * // right identity 
+	 * x.andThen(Ok) = x
+	 * // left identity
+	 * Ok(x).andThen(f) = f(x) 
+	 * // associativity
+	 * x.andThen(y => f(y).andThen(g)) = x.andThen(f).andThen(g)
+	 * ```
+	 * 
 	 * ### Example
 	 * ```ts
-	 * const ok = Ok(25);
-	 * const sq = (x: number) => Ok(x * x);
-	 *
+	 * const val = 25
+	 * const square = (x: number) => x * x
+	 * const add5 = (x: number) => x + 5
+	 * 
 	 * // 25 * 25 => 625 + 5 => 630
-	 * const result = ok.andThen(sq).andThen((x) => Ok(x + 5));
-	 * expect(result.unwrap()).toEqual(630);
+	 * const result = Ok(val)
+	 * 	.andThen(x => Ok(square(x)))
+	 * 	.andThen(x => Ok(add5(x)))
+	 * expect(result.unwrap()).toEqual(add5(square(val)))
 	 * ```
 	 */
 	public andThen = <U>(f: Fn<T,Result<U,E>>): Result<U, E> =>
@@ -309,7 +332,7 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 * Transposes a Result of an Option into an Option of a Result.
 	 *
 	 * `Ok(None)` will be mapped to None. `Ok(Some(_))` and `Err(_)` will be mapped to `Some(Ok(_))` and `Some(Err(_))`.
-	 *
+	 * 
 	 * ### Panics
 	 * Panics if the value is an `Ok` where self is not an `Option`, with a panic message provided by the `Ok`'s value.
 	 *
