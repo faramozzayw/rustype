@@ -202,7 +202,6 @@ export class Option<T> implements Clone<Option<T>> {
 	okOrElse = <E>(ifNone: Lazy<E>): Result<T,E> =>
 		this.maybe(() => Err(ifNone()),x => Ok(clone(x)))
 	/**
-	 * Also known as 'flatMap', 'bind'.
 	 * If the value is present, calls `f` on it and returns the result, otherwise returns `None`.
 	 *
 	 * Also known in another languages as  **flatMap** because: `x.andThen(f) = Option.flatten(x.map(f))`
