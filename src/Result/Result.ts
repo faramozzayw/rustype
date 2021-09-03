@@ -231,6 +231,19 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	public map = <U>(f: Fn<T,U>): Result<U,E> => 
 		this.andThen(x => Ok(f(clone(x))))
 	/**
+	 * Replaces the Ok value, if present, by the value given in parameter.
+	 * 
+	 * ### Example
+	 * ```ts
+	 * expect(Ok(50).replace("Bob").unwrap())
+	 * .toEqual("Bob");
+	 * 
+	 * expect(Err("Charlie").replace("Bob").unwrapErr())
+	 * .toEqual("Charlie");
+	 * ```
+	 */
+	public replace = <U>(on: U): Result<U,E> => this.map(_ => on)
+	/**
 	 * Applies a function to the contained value (if `Ok`), or returns the provided default (if `Err`).
 	 *
 	 * Arguments passed to `mapOr` are eagerly evaluated;
@@ -366,8 +379,6 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 		x.andThen(id)
 	/**
 	 * Returns a string representation of an object.
-	 *
-	 * @override
 	 *
 	 * ### Example
 	 * ```ts
