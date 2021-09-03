@@ -1,7 +1,6 @@
 import clone from "clone-deep";
 
 import { Clone, unwrapFailed } from "../utils";
-import { ResultVariants } from "../types";
 import { None, Some, Option } from "../Option";
 
 interface ResultMatch<T,E,A> {
@@ -40,25 +39,10 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 
 	/** Returns `true` if the result is `Err`. */
 	public isErr = (): boolean => !this.isOk
-	/**
-	 * Returns a copy for `Ok` of the contained value using its own value.
-	 */
-	private cloneOk = (): T =>
-		this.either(
-			_ => {throw Error("called `Result::cloneOk()` on a `Error` value")}
-			,clone)
-	/**
-	 * Returns a copy for `Err` of the contained value using its own value.
-	 */
-	private cloneErr = (): E =>
-		this.either(
-			clone,
-			_ => {throw Error("called `Result::cloneErr()` on a `Ok` value")})
-
 	public clone = (): Result<T,E> =>
 		this.either(
-			err => {const errc = err; return Err(errc)},
-			ok  => {const okc  =  ok; return Ok(okc)})
+			err => {const errclone = err; return Err(errclone)},
+			ok  => {const okclone  =  ok; return Ok(okclone)})
 	/**
 	 * Pattern match to retrieve the value
 	 *
@@ -322,24 +306,6 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	public andThen = <U>(f: Fn<T,Result<U,E>>): Result<U, E> =>
 		this.either(err => Err(err),ok => f(clone(ok)))
 	/**
-	 * Returns a string representation of an object.
-	 *
-	 * @override
-	 *
-	 * ### Example
-	 * ```ts
-	 * expect(Err(5).toString()).toEqual(`Err(5)`);
-	 * expect(Err(Err("Error")).toString()).toEqual(`Err(Err(Error))`);
-	 *
-	 * expect(Ok(5).toString()).toEqual("Ok(5)");
-	 * expect(Ok(Ok(5)).toString()).toEqual("Ok(Ok(5))");
-	 *
-	 * // BUT
-	 * expect(Err({ code: 15 }).toString()).toEqual("Err([object Object])");
-	 * ```
-	 */
-
-	/**
 	 * Transposes a Result of an Option into an Option of a Result.
 	 *
 	 * `Ok(None)` will be mapped to None. `Ok(Some(_))` and `Err(_)` will be mapped to `Some(Ok(_))` and `Some(Err(_))`.
@@ -375,7 +341,23 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 	 */
 	public static flatten = <T,E>(x: Result<Result<T,E>,E>): Result<T,E> =>
 		x.andThen(id)
-
+	/**
+	 * Returns a string representation of an object.
+	 *
+	 * @override
+	 *
+	 * ### Example
+	 * ```ts
+	 * expect(Err(5).toString()).toEqual(`Err(5)`);
+	 * expect(Err(Err("Error")).toString()).toEqual(`Err(Err(Error))`);
+	 *
+	 * expect(Ok(5).toString()).toEqual("Ok(5)");
+	 * expect(Ok(Ok(5)).toString()).toEqual("Ok(Ok(5))");
+	 *
+	 * // BUT
+	 * expect(Err({ code: 15 }).toString()).toEqual("Err([object Object])");
+	 * ```
+	 */
 	public toString = () =>
 		this.either(
 			err =>`Err(${(err as unknown as object).toString()})`,

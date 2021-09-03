@@ -228,19 +228,15 @@ export class Option<T> implements Clone<Option<T>> {
 	filter = (predicate: Fn<T,boolean>): Option<T> =>
 		this.andThen(x => predicate(x) ? Some(x) : None())
 	/**
-	 * Replaces the actual value in the option by the value given in parameter,
-	 * returning the old value if present, leaving a `Some` in its place without
-	 * deinitializing either one.
-	 *
+	 * Replaces the actual value in the option, if present, by the value given in parameter.
+	 * 
 	 * ### Example
 	 * ```ts
-	 * expect(Some(50).unwrap()).toEqual(50);
-	 *
-	 * const oldSome = some.replace(250); expect(oldSome.unwrap()).toEqual(50);
-	 * expect(some.unwrap()).toEqual(250);
+	 * expect(Some(50).replace("Bob")).toEqual(Some("Bob"));
+	 * expect(None().replace("Bob")).toEqual(None());
 	 * ```
 	 */
-	replace = (on: T): Option<T> => this.map(_ => on)
+	replace = <U>(on: U): Option<U> => this.map(_ => on)
 	/**
 	 * Zips `self` with another `Option`.
 	 *
@@ -276,49 +272,49 @@ export class Option<T> implements Clone<Option<T>> {
 		this.maybe(
 			() => 'None()',
 			x => `Some(${(x as unknown as object).toString()})`)
+	/**
+	 * Transposes an `Option` of a `Result` into a `Result` of an `Option`.
+	 *
+	 * `None` will be mapped to `Ok(None)`. `Some(Ok(_))` and `Some(Err(_))` will
+	 * be mapped to `Ok(Some(_))` and `Err(_)`.
+	 *
+	 * ### Panics Panics if the value is an `Some` where self is not an `Result`,
+	 * with a panic message provided by the `Some`'s value.
+	 *
+	 * ### Example
+	 * ```ts
+	 * const x: Result<Option<number>, string> = Ok(Some(5));
+	 * const y: Option<Result<number, string>> = Some(Ok(5));
+	 *
+	 * expect(x).toEqual(Option.transpose(y));
+	 * ```
+	 */
+	static transpose = <T,E>(x: Option<Result<T,E>>): Result<Option<T>,E> =>
+		x.mapOrElse(
+			() => Ok(None<T>()),
+			r => r.mapOrElse(
+				err => Err(err),
+				ok => Ok(Some(ok))))
+	/**
+	* Converts from Option<Option<T>> to Option<T>
+	*
+	* ### Example
+	* ```ts
+	* expect(Option.flatten(Some(Some(Some(50))))).toEqual(Some(Some(50)));
+	* expect(Option.flatten(Some(Some(50)))).toEqual(Some(50));
+	*
+	* expect(Some(50).flatten()).toEqual(Some(50));
+	* expect(Some(50).flatten().unwrap()).toEqual(50);
+	*
+	* expect(Option.flatten(Some(None()))).toEqual(None());
+	* expect(Option.flatten(None())).toEqual(None());
+	* ```
+	*/
+	static flatten = <T>(x:Option<Option<T>>) => 
+		x.andThen((y:Option<T>) => y)
 }
-/**
- * Transposes an `Option` of a `Result` into a `Result` of an `Option`.
- *
- * `None` will be mapped to `Ok(None)`. `Some(Ok(_))` and `Some(Err(_))` will
- * be mapped to `Ok(Some(_))` and `Err(_)`.
- *
- * ### Panics Panics if the value is an `Some` where self is not an `Result`,
- * with a panic message provided by the `Some`'s value.
- *
- * ### Example
- * ```ts
- * const x: Result<Option<number>, string> = Ok(Some(5));
- * const y: Option<Result<number, string>> = Some(Ok(5));
- *
- * expect(x).toEqual(y.transpose());
- * ```
- */
- export const transpose = 
-	<T,E>(x: Option<Result<T,E>>): Result<Option<T>,E> =>
-	
-	x.mapOrElse(
-		() => Ok(None<T>()),
-		r => r.mapOrElse(
-			err => Err(err),
-			ok => Ok(Some(ok))))
-/**
-* Converts from Option<Option<T>> to Option<T>
-*
-* ### Example
-* ```ts
-* expect(Some(Some(Some(50))).flatten()).toEqual(Some(Some(50)));
-* expect(Some(Some(50)).flatten()).toEqual(Some(50));
-*
-* expect(Some(50).flatten()).toEqual(Some(50));
-* expect(Some(50).flatten().unwrap()).toEqual(50);
-*
-* expect(Some(None()).flatten()).toEqual(None());
-* expect(None().flatten()).toEqual(None());
-* ```
-*/
-export const flatten = <T>(x:Option<Option<T>>) => 
-	x.andThen((y:Option<T>) => y)
+
+
 
 export const Some = Option.mkSome
 export const None = Option.mkNone
