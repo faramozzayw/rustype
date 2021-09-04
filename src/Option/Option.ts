@@ -1,7 +1,7 @@
 import clone from "clone-deep";
 import { Ok, Err, Result, Right, Left, Sum } from "../Result";
 import { Clone } from "../utils";
-import { Lazy, Fn, Fn2 } from "../types";
+import { Lazy, Fn, Fn2 } from "../";
 
 export interface OptionMatch<T,A> {
 	some: (some: T) => A;
@@ -13,7 +13,7 @@ export class Option<T> implements Clone<Option<T>> {
 	readonly val: Sum<null,T> // this value should be comparable
 
 	maybe<A>(ifNone: Lazy<A>, ifSome: Fn<T,A>): A {
-		return this.val.either(_ => ifNone(),ifSome)
+		return this.val.either((_:null) => ifNone(),ifSome)
 	}
 
 	static mkSome = <T>(x:T) => 
@@ -53,8 +53,10 @@ export class Option<T> implements Clone<Option<T>> {
 	unwrapOrElse(ifNone: Lazy<T>): T {
 		return this.maybe(ifNone, clone)
 	}
+	// JUST TO BREAK TESTS!
 	map<U>(f: Fn<T,U>): Option<U>{
 		return this.andThen(x => Some(f(clone(x))))
+		//	(typeof x == 'undefined') ? None() : Some(f(clone(x))))
 	}
 	mapOr<U>(ifNone: U, f: Fn<T,U>): U {
 		return this.maybe(() => ifNone,toClone(f))

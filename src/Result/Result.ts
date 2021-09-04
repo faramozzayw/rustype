@@ -2,7 +2,7 @@ import clone from "clone-deep";
 
 import { Clone, unwrapFailed } from "../utils";
 import { None, Some, Option } from "../Option";
-import { Lazy, Fn, Fn2 } from "../types";
+import { Lazy, Fn, Fn2 } from "../";
 
 interface ResultMatch<T,E,A> {
 	ok: (ok: T) => A;
