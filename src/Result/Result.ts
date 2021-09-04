@@ -144,8 +144,8 @@ export class Result<T, E> implements Clone<Result<T, E>> {
 
 	toString (){
 		return this.either(
-			err =>`Err(${(err as unknown as object).toString()})`,
-			ok => `Ok(${(ok as unknown as object).toString()})`)
+			err =>`Err(${err})`,
+			ok => `Ok(${ok})`)
 	}
 }
 

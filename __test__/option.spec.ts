@@ -3,17 +3,17 @@ import * as fc from 'fast-check';
 import { Arbitrary, Shrinkable } from "fast-check";
 import { None, Some, Option, Ok, Err, Result, Lazy, Fn, Fn2 } from "./../src";
 
-const id = <A>(x:A): A => x
 fc.configureGlobal({numRuns : 500})
+
 const randOption = <T>(x: Arbitrary<T>): Arbitrary<Option<T>> => 
 	fc.boolean().chain(b => x.map(val => b ? Some<T>(val) : None<T>()))
-
 const randResult = <T,E>(ok: Arbitrary<T>, err: Arbitrary<E>): Arbitrary<Result<T,E>> => 
 	fc.boolean().chain(b => b
 		?  ok.map(x =>  Ok(x)) 
 		: err.map(x => Err(x)))
 
 const lazy = <A>(x:A) => () => x
+const id = <A>(x:A): A => x
 
 describe("Option", () => {
 	it("toString", () => {
@@ -23,10 +23,10 @@ describe("Option", () => {
 
 		fc.assert(fc.property(fc.anything(),prop))
 	});
-	it("equality is working", () => {
+	it("==: reflexivity", () => {
+		const reflexive = <A>(x:A) => expect(Some(x)).toEqual(Some(x))
 		expect(None()).toEqual(None())
-		expect(Some(44)).toEqual(Some(44))
-		expect(None<number>()).toEqual(None<string>())
+		fc.assert(fc.property(fc.anything(),reflexive))
 	})
 	it("isSome", () => {
 		let prop = <A>(x:A) => expect(Some(x).isSome()).toBeTruthy()
