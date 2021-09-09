@@ -27,7 +27,8 @@
 		"build": "rm -rf ./lib && tsc",
 		"test": "jest",
 		"test:watch": "jest --watch",
-		"docs": "typedoc"
+		"docs": "typedoc",
+		"format": "prettier --check \"src/**/*.{ts,tsx}\""
 	},
 	"files": [
 		"lib/"
